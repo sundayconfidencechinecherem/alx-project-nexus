@@ -1,4 +1,4 @@
-name: Craveo CI Checks
+name: check  # Changed from "Craveo CI Checks" to match the expected name
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  frontend-check:
+  check:  # Changed from "frontend-check" to "check"
     runs-on: ubuntu-latest
     defaults:
       run:
