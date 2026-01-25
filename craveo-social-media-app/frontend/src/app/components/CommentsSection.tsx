@@ -5,23 +5,7 @@ import { FaComment, FaSort } from 'react-icons/fa';
 import CommentCard from './CommentCard';
 import Button from './Button';
 import Input from './Input';
-
-interface Comment {
-  id: string;
-  user: {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
-    isVerified: boolean;
-  };
-  content: string;
-  likes: number;
-  isLiked: boolean;
-  replies: number;
-  createdAt: Date;
-  repliesList?: Comment[];
-}
+import { Comment } from '../types/comment';
 
 interface CommentsSectionProps {
   comments: Comment[];
@@ -47,8 +31,10 @@ export default function CommentsSection({
     if (sortBy === 'popular') {
       return b.likes - a.likes;
     }
-    // recent
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    // recent - convert to Date objects for comparison
+    const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt;
+    const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt;
+    return dateB.getTime() - dateA.getTime();
   });
 
   const handleSubmitComment = (e: React.FormEvent) => {

@@ -28,7 +28,10 @@ export default function PostCard({ post, onLike, onComment, onShare, onSave }: P
     onSave?.(post.id);
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateInput: Date | string) => {
+    // Convert to Date object if it's a string
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);

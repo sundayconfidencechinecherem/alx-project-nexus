@@ -1,3 +1,5 @@
+import { Post } from './post';
+
 export interface Comment {
   id: string;
   user: {

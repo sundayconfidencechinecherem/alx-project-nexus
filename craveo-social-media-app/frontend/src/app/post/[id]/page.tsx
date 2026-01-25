@@ -202,7 +202,10 @@ export default function SinglePostPage() {
     // In real app, this would update the comment's replies
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateInput: Date | string) => {
+    // Convert to Date object if it's a string
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    
     return date.toLocaleDateString('en-US', { 
       weekday: 'long',
       year: 'numeric', 
