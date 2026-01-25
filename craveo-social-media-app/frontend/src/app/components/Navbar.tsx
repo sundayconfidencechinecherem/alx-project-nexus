@@ -2,12 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaSearch, FaPlus, FaHome, FaCompass, FaUser, FaBell, FaBars, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaHome, FaCompass, FaUser, FaBell, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 import Button from './Button';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    setIsMenuOpen(false);
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-surface/95 backdrop-blur-lg border-b border-border">
@@ -45,14 +52,16 @@ export default function Navbar() {
               <span>Explore</span>
             </Link>
             
-            <Link
-              href="/create-post"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'create' ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'}`}
-              onClick={() => setActiveTab('create')}
-            >
-              <FaPlus />
-              <span>Create</span>
-            </Link>
+            {isAuthenticated && (
+              <Link
+                href="/create-post"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'create' ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'}`}
+                onClick={() => setActiveTab('create')}
+              >
+                <FaPlus />
+                <span>Create</span>
+              </Link>
+            )}
           </div>
 
           {/* Search Bar */}
@@ -75,18 +84,51 @@ export default function Navbar() {
             </button>
 
             {/* Notifications */}
-            <button className="relative p-2 text-text-secondary hover:text-text-primary">
-              <FaBell />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
-            </button>
+            {isAuthenticated && (
+              <button className="relative p-2 text-text-secondary hover:text-text-primary">
+                <FaBell />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+              </button>
+            )}
 
-            {/* Profile */}
-            <Link href="/profile/me">
-              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-hover cursor-pointer">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-secondary"></div>
-                <span className="text-text-primary hidden md:block">Profile</span>
+            {/* Profile/Auth */}
+            {isAuthenticated ? (
+              <>
+                <Link href="/profile/me">
+                  <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-hover cursor-pointer">
+                    <img
+                      src={user?.avatar || '/images/persons/person3.png'}
+                      alt={user?.username || 'Profile'}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <span className="text-text-primary hidden md:block">{user?.username}</span>
+                  </div>
+                </Link>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={<FaSignOutAlt />}
+                  onClick={handleLogout}
+                  className="hidden md:flex"
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link href="/auth/login">
+                  <Button variant="outline" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button variant="primary" size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
               </div>
-            </Link>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -120,23 +162,55 @@ export default function Navbar() {
                 <span>Explore</span>
               </Link>
               
-              <Link
-                href="/create-post"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-hover text-text-primary"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FaPlus />
-                <span>Create Post</span>
-              </Link>
+              {isAuthenticated && (
+                <>
+                  <Link
+                    href="/create-post"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-hover text-text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FaPlus />
+                    <span>Create Post</span>
+                  </Link>
+                  
+                  <Link
+                    href="/profile/me"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-hover text-text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FaUser />
+                    <span>Profile</span>
+                  </Link>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-hover text-error"
+                  >
+                    <FaSignOutAlt />
+                    <span>Logout</span>
+                  </button>
+                </>
+              )}
               
-              <Link
-                href="/profile/me"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-hover text-text-primary"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FaUser />
-                <span>Profile</span>
-              </Link>
+              {!isAuthenticated && (
+                <>
+                  <Link
+                    href="/auth/login"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-hover text-text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span>Login</span>
+                  </Link>
+                  
+                  <Link
+                    href="/auth/register"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-hover text-text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span>Sign Up</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
