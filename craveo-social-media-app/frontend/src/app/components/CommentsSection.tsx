@@ -11,27 +11,20 @@ interface CommentsSectionProps {
   comments: Comment[];
   postId: string;
   onAddComment?: (content: string) => void;
-  onLikeComment?: (commentId: string) => void;
-  onReplyToComment?: (commentId: string, content: string) => void;
 }
 
 export default function CommentsSection({
   comments,
   postId,
   onAddComment,
-  onLikeComment,
-  onReplyToComment,
 }: CommentsSectionProps) {
   const [newComment, setNewComment] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState('');
 
   const sortedComments = [...comments].sort((a, b) => {
     if (sortBy === 'popular') {
       return b.likes - a.likes;
     }
-    // recent - convert to Date objects for comparison
     const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt;
     const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt;
     return dateB.getTime() - dateA.getTime();
@@ -43,22 +36,6 @@ export default function CommentsSection({
       onAddComment?.(newComment.trim());
       setNewComment('');
     }
-  };
-
-  const handleSubmitReply = (commentId: string) => {
-    if (replyContent.trim()) {
-      onReplyToComment?.(commentId, replyContent.trim());
-      setReplyContent('');
-      setReplyingTo(null);
-    }
-  };
-
-  const handleLikeComment = (commentId: string) => {
-    onLikeComment?.(commentId);
-  };
-
-  const handleReplyToComment = (commentId: string) => {
-    setReplyingTo(commentId);
   };
 
   return (
@@ -130,62 +107,13 @@ export default function CommentsSection({
         ) : (
           sortedComments.map((comment) => (
             <div key={comment.id} className="space-y-4">
-              <CommentCard
-                comment={comment}
-                onLike={() => handleLikeComment(comment.id)}
-                onReply={() => handleReplyToComment(comment.id)}
-              />
-
-              {/* Reply Form (when active) */}
-              {replyingTo === comment.id && (
-                <div className="ml-12">
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-secondary"></div>
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder={`Replying to @${comment.user.username}...`}
-                        className="bg-surface-hover text-sm"
-                        autoFocus
-                      />
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setReplyingTo(null);
-                            setReplyContent('');
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleSubmitReply(comment.id)}
-                          disabled={!replyContent.trim()}
-                        >
-                          Reply
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <CommentCard comment={comment} />
 
               {/* Nested Replies */}
               {comment.repliesList && comment.repliesList.length > 0 && (
                 <div className="ml-12 space-y-4">
                   {comment.repliesList.map((reply) => (
-                    <CommentCard
-                      key={reply.id}
-                      comment={{ ...reply, isReply: true }}
-                      onLike={() => handleLikeComment(reply.id)}
-                      onReply={() => handleReplyToComment(reply.id)}
-                    />
+                    <CommentCard key={reply.id} comment={reply} />
                   ))}
                 </div>
               )}
@@ -193,15 +121,6 @@ export default function CommentsSection({
           ))
         )}
       </div>
-
-      {/* Load More (if applicable) */}
-      {comments.length > 5 && (
-        <div className="text-center mt-8">
-          <Button variant="outline" size="sm">
-            Load More Comments
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

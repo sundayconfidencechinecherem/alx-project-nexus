@@ -1,68 +1,47 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import { 
-  User, 
-  AuthTokens, 
-  LoginCredentials, 
-  RegisterData, 
-  AuthState, 
-  DecodedToken 
-} from '../types/auth';
 
-// Mock API functions (replace with real API calls)
-const mockLogin = async (credentials: LoginCredentials): Promise<{ user: User; tokens: AuthTokens }> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock user data
-  const user: User = {
-    id: 'me',
-    username: credentials.email.split('@')[0],
-    email: credentials.email,
-    fullName: 'Your Name',
-    avatar: '/images/persons/person3.png',
-    isVerified: false,
-    followers: 1248,
-    following: 256,
-    posts: 34,
-    createdAt: new Date(),
-    bio: 'Welcome to my food journey! Sharing my kitchen experiments and restaurant discoveries.',
-  };
+// Types
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  avatar?: string;
+  bio?: string;
+  isVerified: boolean;
+  followers: number;
+  following: number;
+  posts: number;
+  createdAt: string | Date;
+}
 
-  // Mock tokens (in real app, these come from backend)
-  const tokens: AuthTokens = {
-    accessToken: 'mock-access-token-' + Date.now(),
-    refreshToken: 'mock-refresh-token-' + Date.now(),
-  };
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
 
-  return { user, tokens };
-};
+export interface LoginCredentials {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
 
-const mockRegister = async (data: RegisterData): Promise<{ user: User; tokens: AuthTokens }> => {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  const user: User = {
-    id: 'new-user-' + Date.now(),
-    username: data.username,
-    email: data.email,
-    fullName: data.fullName,
-    avatar: '/images/persons/person3.png',
-    isVerified: false,
-    followers: 0,
-    following: 0,
-    posts: 0,
-    createdAt: new Date(),
-  };
+export interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+  fullName: string;
+}
 
-  const tokens: AuthTokens = {
-    accessToken: 'mock-access-token-' + Date.now(),
-    refreshToken: 'mock-refresh-token-' + Date.now(),
-  };
-
-  return { user, tokens };
-};
+export interface AuthState {
+  user: User | null;
+  tokens: AuthTokens | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -92,7 +71,8 @@ type AuthAction =
   | { type: 'UPDATE_USER'; payload: User }
   | { type: 'UPDATE_TOKENS'; payload: AuthTokens }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null };
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'LOAD_FROM_STORAGE'; payload: { user: User | null; tokens: AuthTokens | null } };
 
 // Reducer
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
@@ -107,11 +87,12 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     
     case 'LOGIN_SUCCESS':
     case 'REGISTER_SUCCESS':
+    case 'LOAD_FROM_STORAGE':
       return {
         ...state,
         user: action.payload.user,
         tokens: action.payload.tokens,
-        isAuthenticated: true,
+        isAuthenticated: !!(action.payload.user && action.payload.tokens),
         isLoading: false,
         error: null,
       };
@@ -173,11 +154,59 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   updateUser: (user: User) => void;
   updateTokens: (tokens: AuthTokens) => void;
-  refreshToken: () => Promise<boolean>;
   clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Mock API functions
+const mockLogin = async (credentials: LoginCredentials): Promise<{ user: User; tokens: AuthTokens }> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  const user: User = {
+    id: 'user-' + Date.now(),
+    username: credentials.email.split('@')[0],
+    email: credentials.email,
+    fullName: 'Test User',
+    avatar: '/images/persons/person3.png',
+    isVerified: true,
+    followers: 1248,
+    following: 256,
+    posts: 34,
+    createdAt: new Date(),
+  };
+
+  const tokens: AuthTokens = {
+    accessToken: 'mock-access-token-' + Date.now(),
+    refreshToken: 'mock-refresh-token-' + Date.now(),
+  };
+
+  return { user, tokens };
+};
+
+const mockRegister = async (data: RegisterData): Promise<{ user: User; tokens: AuthTokens }> => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  const user: User = {
+    id: 'new-user-' + Date.now(),
+    username: data.username,
+    email: data.email,
+    fullName: data.fullName,
+    avatar: '/images/persons/person3.png',
+    isVerified: false,
+    followers: 0,
+    following: 0,
+    posts: 0,
+    createdAt: new Date(),
+  };
+
+  const tokens: AuthTokens = {
+    accessToken: 'mock-access-token-' + Date.now(),
+    refreshToken: 'mock-refresh-token-' + Date.now(),
+  };
+
+  return { user, tokens };
+};
 
 // Provider
 interface AuthProviderProps {
@@ -197,37 +226,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (storedUser && storedTokens) {
           const user = JSON.parse(storedUser);
           const tokens = JSON.parse(storedTokens);
-
-          // Check if token is expired
-          if (tokens.accessToken) {
-            try {
-              const decoded = jwtDecode<DecodedToken>(tokens.accessToken);
-              const isExpired = decoded.exp * 1000 < Date.now();
-
-              if (isExpired) {
-                // Token expired, try to refresh
-                console.log('Token expired, attempting refresh...');
-                // In real app, call refresh token endpoint
-                localStorage.removeItem(STORAGE_KEYS.USER);
-                localStorage.removeItem(STORAGE_KEYS.TOKENS);
-                dispatch({ type: 'SET_LOADING', payload: false });
-                return;
-              }
-
-              dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: { user, tokens },
-              });
-            } catch (error) {
-              console.error('Token decode error:', error);
-              localStorage.removeItem(STORAGE_KEYS.USER);
-              localStorage.removeItem(STORAGE_KEYS.TOKENS);
-            }
-          }
+          
+          dispatch({
+            type: 'LOAD_FROM_STORAGE',
+            payload: { user, tokens },
+          });
+        } else {
+          dispatch({ type: 'SET_LOADING', payload: false });
         }
       } catch (error) {
-        console.error('Error loading auth state:', error);
-      } finally {
+        console.error('Failed to load auth state');
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
@@ -235,105 +243,68 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loadAuthState();
   }, []);
 
-  // Save auth state to storage when it changes
-  useEffect(() => {
-    if (state.user && state.tokens) {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(state.user));
-      localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(state.tokens));
-    }
-  }, [state.user, state.tokens]);
-
   // Login function
   const login = async (credentials: LoginCredentials) => {
-    dispatch({ type: 'LOGIN_REQUEST' });
-
     try {
+      dispatch({ type: 'LOGIN_REQUEST' });
+      
       const { user, tokens } = await mockLogin(credentials);
-
-      // Store remember me preference
+      
+      // Save to localStorage
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(tokens));
       if (credentials.rememberMe) {
         localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, 'true');
-      } else {
-        localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
       }
-
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: { user, tokens },
-      });
-    } catch (error) {
-      dispatch({
-        type: 'LOGIN_FAILURE',
-        payload: error instanceof Error ? error.message : 'Login failed',
-      });
-      throw error;
+      
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, tokens } });
+    } catch (error: any) {
+      const errorMessage = error.message || 'Login failed';
+      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
+      throw new Error(errorMessage);
     }
   };
 
   // Register function
   const register = async (data: RegisterData) => {
-    dispatch({ type: 'REGISTER_REQUEST' });
-
     try {
+      dispatch({ type: 'REGISTER_REQUEST' });
+      
       const { user, tokens } = await mockRegister(data);
-
-      dispatch({
-        type: 'REGISTER_SUCCESS',
-        payload: { user, tokens },
-      });
-    } catch (error) {
-      dispatch({
-        type: 'REGISTER_FAILURE',
-        payload: error instanceof Error ? error.message : 'Registration failed',
-      });
-      throw error;
+      
+      // Save to localStorage
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(tokens));
+      
+      dispatch({ type: 'REGISTER_SUCCESS', payload: { user, tokens } });
+    } catch (error: any) {
+      const errorMessage = error.message || 'Registration failed';
+      dispatch({ type: 'REGISTER_FAILURE', payload: errorMessage });
+      throw new Error(errorMessage);
     }
   };
 
   // Logout function
   const logout = () => {
-    // Clear storage
     localStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.removeItem(STORAGE_KEYS.TOKENS);
-    
-    // Clear remember me if not set
-    const rememberMe = localStorage.getItem(STORAGE_KEYS.REMEMBER_ME);
-    if (!rememberMe) {
-      localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
-    }
-
+    localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     dispatch({ type: 'LOGOUT' });
   };
 
-  // Update user function
+  // Update user
   const updateUser = (user: User) => {
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     dispatch({ type: 'UPDATE_USER', payload: user });
   };
 
-  // Update tokens function
+  // Update tokens
   const updateTokens = (tokens: AuthTokens) => {
+    localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify(tokens));
     dispatch({ type: 'UPDATE_TOKENS', payload: tokens });
   };
 
-  // Refresh token function (mock implementation)
-  const refreshToken = async (): Promise<boolean> => {
-    try {
-      // In real app, call refresh token endpoint
-      const newTokens: AuthTokens = {
-        accessToken: 'refreshed-mock-token-' + Date.now(),
-        refreshToken: 'refreshed-mock-refresh-token-' + Date.now(),
-      };
-
-      updateTokens(newTokens);
-      return true;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      logout();
-      return false;
-    }
-  };
-
-  // Clear error function
+  // Clear error
   const clearError = () => {
     dispatch({ type: 'SET_ERROR', payload: null });
   };
@@ -345,7 +316,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateUser,
     updateTokens,
-    refreshToken,
     clearError,
   };
 
@@ -356,7 +326,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Hook for using auth context
+// Hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

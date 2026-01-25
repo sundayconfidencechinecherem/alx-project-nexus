@@ -55,7 +55,6 @@ export default function ProfileHeader({
 
   const handleSaveBio = () => {
     // In real app, save bio to API
-    console.log('Saving bio:', bioText);
     setIsEditingBio(false);
   };
 

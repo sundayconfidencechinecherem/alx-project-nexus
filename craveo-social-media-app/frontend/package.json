@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@apollo/client": "^4.1.2",
+    "graphql": "^16.12.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.563.0",
     "next": "13.5.11",
@@ -19,10 +21,14 @@
     "react-intersection-observer": "^10.0.2"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^6.1.1",
+    "@graphql-codegen/typescript": "^5.0.7",
+    "@graphql-codegen/typescript-operations": "^5.0.7",
+    "@graphql-codegen/typescript-react-apollo": "^4.4.0",
     "@types/jwt-decode": "^2.2.1",
     "@types/node": "^20.19.30",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10",
     "postcss": "^8",
     "tailwindcss": "^3",
