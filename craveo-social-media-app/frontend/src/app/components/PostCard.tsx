@@ -1,234 +1,238 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Image from 'next/image'
-import { Post } from '../types/post'
-import { 
-  FaHeart, FaRegHeart, FaComment, FaShareAlt, 
-  FaBookmark, FaRegBookmark, FaEllipsisV,
-  FaClock, FaMapMarkerAlt, FaUsers, FaFire,
-  FaUtensils, FaCheck
-} from 'react-icons/fa'
+import { useState } from 'react';
+import { FaHeart, FaComment, FaShare, FaBookmark, FaEllipsisH, FaExternalLinkAlt, FaCheck } from 'react-icons/fa';
+import { Post } from '../types/post';
+import Link from 'next/link';
 
 interface PostCardProps {
-  post: Post
-  onLike?: (postId: string) => void
-  onComment?: (postId: string) => void
-  onShare?: (postId: string) => void
-  onSave?: (postId: string) => void
+  post: Post;
+  onLike?: (postId: string) => void;
+  onComment?: (postId: string) => void;
+  onShare?: (postId: string) => void;
+  onSave?: (postId: string) => void;
 }
 
 export default function PostCard({ post, onLike, onComment, onShare, onSave }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(post.isLiked)
-  const [isSaved, setIsSaved] = useState(post.isSaved)
-  const [likeCount, setLikeCount] = useState(post.likes)
+  const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [isSaved, setIsSaved] = useState(post.isSaved);
+  const [showMoreActions, setShowMoreActions] = useState(false);
 
   const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1)
-    onLike?.(post.id)
-  }
+    setIsLiked(!isLiked);
+    onLike?.(post.id);
+  };
 
   const handleSave = () => {
-    setIsSaved(!isSaved)
-    onSave?.(post.id)
-  }
+    setIsSaved(!isSaved);
+    onSave?.(post.id);
+  };
 
-  const handleComment = () => {
-    onComment?.(post.id)
-  }
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-  const handleShare = () => {
-    onShare?.(post.id)
-  }
-
-  const formatDate = (date: Date | string) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return dateObj.toLocaleDateString('en-US', { 
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    
+    return date.toLocaleDateString('en-US', { 
       month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const getDifficultyColor = () => {
-    switch (post.difficulty) {
-      case 'Easy': return 'bg-success'
-      case 'Medium': return 'bg-warning'
-      case 'Hard': return 'bg-error'
-      default: return 'bg-text-tertiary'
-    }
-  }
+      day: 'numeric' 
+    });
+  };
 
   return (
-    <div className="bg-surface rounded-xl shadow-lg overflow-hidden border border-border hover:shadow-xl transition-shadow duration-300">
-      {/* Post Header */}
+    <div className="bg-surface rounded-xl shadow-lg overflow-hidden border border-border hover:shadow-xl transition-shadow">
+      {/* Header */}
       <div className="p-4 border-b border-divider">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
-                <Image 
-                  src={post.user.avatar} 
+            <Link href={`/profile/${post.user.id.replace('user-', '')}`}>
+              <div className="relative cursor-pointer">
+                <img
+                  src={post.user.avatar}
                   alt={post.user.name}
-                  width={40}
-                  height={40}
-                  className="object-cover"
+                  className="w-10 h-10 rounded-full object-cover"
                 />
+                {post.user.isVerified && (
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary rounded-full border-2 border-surface flex items-center justify-center">
+                    <FaCheck className="w-2 h-2 text-white" />
+                  </div>
+                )}
               </div>
-              {post.user.isVerified && (
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                  <FaCheck className="w-3 h-3 text-white" />
-                </div>
-              )}
-            </div>
+            </Link>
+            
             <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-text-primary">{post.user.name}</h3>
-                <span className="text-text-tertiary">•</span>
-                <span className="text-text-tertiary text-sm">{formatDate(post.createdAt)}</span>
+              <Link 
+                href={`/profile/${post.user.id.replace('user-', '')}`}
+                className="flex items-center gap-1 hover:opacity-80"
+              >
+                <span className="font-semibold text-text-primary">{post.user.name}</span>
+                {post.user.isVerified && (
+                  <span className="text-xs px-1.5 py-0.5 bg-primary text-white rounded-full">✓</span>
+                )}
+              </Link>
+              
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
+                <span>@{post.user.username}</span>
+                <span className="w-1 h-1 bg-text-tertiary rounded-full"></span>
+                <Link 
+                  href={`/post/${post.id}`}
+                  className="hover:text-text-primary"
+                >
+                  {formatDate(post.createdAt)}
+                </Link>
+                {post.location && (
+                  <>
+                    <span className="w-1 h-1 bg-text-tertiary rounded-full"></span>
+                    <span className="flex items-center gap-1">
+                      <span>{post.location}</span>
+                    </span>
+                  </>
+                )}
               </div>
-              <p className="text-text-secondary text-sm">@{post.user.username}</p>
             </div>
           </div>
-          <button className="p-2 hover:bg-surface-hover rounded-full transition-colors">
-            <FaEllipsisV className="w-5 h-5 text-text-tertiary" />
-          </button>
+          
+          <div className="relative">
+            <button
+              onClick={() => setShowMoreActions(!showMoreActions)}
+              className="p-2 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface-hover"
+            >
+              <FaEllipsisH />
+            </button>
+            
+            {showMoreActions && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-lg shadow-lg z-10">
+                <Link 
+                  href={`/post/${post.id}`}
+                  className="block w-full text-left px-4 py-3 text-sm text-text-primary hover:bg-surface-hover flex items-center gap-2"
+                >
+                  <FaExternalLinkAlt className="w-3 h-3" />
+                  View post details
+                </Link>
+                <button className="w-full text-left px-4 py-3 text-sm text-text-primary hover:bg-surface-hover">
+                  Copy link
+                </button>
+                <button className="w-full text-left px-4 py-3 text-sm text-error hover:bg-surface-hover">
+                  Report post
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Post Image */}
-      <div className="relative h-96 bg-gray-100">
-        <Image
-          src={post.imageUrl}
-          alt={post.caption}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={post.id === '1'} // Load first image immediately
-        />
-      </div>
+      {/* Image with link to single post */}
+      <Link href={`/post/${post.id}`}>
+        <div className="relative cursor-pointer">
+          <img
+            src={post.imageUrl}
+            alt={post.caption}
+            className="w-full h-64 object-cover hover:opacity-95 transition-opacity"
+          />
+        </div>
+      </Link>
 
-      {/* Post Actions */}
+      {/* Actions */}
       <div className="p-4 border-b border-divider">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={handleLike}
-              className={`flex items-center space-x-2 p-2 rounded-lg transition-colors ${isLiked ? 'text-primary' : 'text-text-primary hover:text-primary'}`}
+              className={`flex items-center space-x-2 ${isLiked ? 'text-red-500' : 'text-text-secondary hover:text-text-primary'}`}
             >
-              {isLiked ? (
-                <FaHeart className="w-6 h-6 fill-current" />
-              ) : (
-                <FaRegHeart className="w-6 h-6" />
-              )}
-              <span className="font-medium">{likeCount.toLocaleString()}</span>
+              <FaHeart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
+              <span className="font-medium">{post.likes.toLocaleString()}</span>
             </button>
-
+            
+            <Link href={`/post/${post.id}`}>
+              <button className="flex items-center space-x-2 text-text-secondary hover:text-text-primary">
+                <FaComment className="w-6 h-6" />
+                <span className="font-medium">{post.comments.toLocaleString()}</span>
+              </button>
+            </Link>
+            
             <button
-              onClick={handleComment}
-              className="flex items-center space-x-2 p-2 rounded-lg text-text-primary hover:text-primary transition-colors"
+              onClick={() => onShare?.(post.id)}
+              className="flex items-center space-x-2 text-text-secondary hover:text-text-primary"
             >
-              <FaComment className="w-6 h-6" />
-              <span className="font-medium">{post.comments.toLocaleString()}</span>
-            </button>
-
-            <button
-              onClick={handleShare}
-              className="flex items-center space-x-2 p-2 rounded-lg text-text-primary hover:text-primary transition-colors"
-            >
-              <FaShareAlt className="w-6 h-6" />
+              <FaShare className="w-6 h-6" />
               <span className="font-medium">{post.shares.toLocaleString()}</span>
             </button>
           </div>
-
+          
           <button
             onClick={handleSave}
-            className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-primary' : 'text-text-primary hover:text-primary'}`}
+            className={`${isSaved ? 'text-yellow-500' : 'text-text-secondary hover:text-text-primary'}`}
           >
-            {isSaved ? (
-              <FaBookmark className="w-6 h-6 fill-current" />
-            ) : (
-              <FaRegBookmark className="w-6 h-6" />
-            )}
+            <FaBookmark className="w-6 h-6" />
           </button>
         </div>
       </div>
 
-      {/* Post Content */}
+      {/* Content */}
       <div className="p-4">
-        <div className="mb-4">
-          <p className="text-text-primary">
-            <span className="font-semibold">{post.user.username}</span>
-            {' '}
-            {post.caption}
-          </p>
-        </div>
-
-        {/* Tags */}
-        {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {post.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-primary-light text-primary rounded-full text-sm font-medium"
+        <div className="space-y-3">
+          <Link href={`/post/${post.id}`}>
+            <p className="text-text-primary whitespace-pre-line line-clamp-2 hover:text-primary cursor-pointer">
+              {post.caption}
+            </p>
+          </Link>
+          
+          <div className="flex flex-wrap gap-2">
+            {post.tags.map((tag) => (
+              <Link 
+                key={tag}
+                href={`/explore?tag=${tag}`}
+                className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 cursor-pointer"
               >
                 #{tag}
-              </span>
+              </Link>
             ))}
           </div>
-        )}
 
-        {/* Post Metadata */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-text-secondary">
-          {post.cuisine && (
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 rounded-full bg-primary-light flex items-center justify-center">
-                <FaUtensils className="w-3 h-3 text-primary" />
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            {post.cuisine && (
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary">Cuisine:</span>
+                <span className="font-medium text-text-primary">{post.cuisine}</span>
               </div>
-              <span>{post.cuisine}</span>
-            </div>
-          )}
-
-          {post.prepTime && (
-            <div className="flex items-center space-x-2">
-              <FaClock className="w-4 h-4" />
-              <span>{post.prepTime}</span>
-            </div>
-          )}
-
-          {post.difficulty && (
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${getDifficultyColor()}`} />
-              <span>{post.difficulty}</span>
-            </div>
-          )}
-
-          {post.location && (
-            <div className="flex items-center space-x-2">
-              <FaMapMarkerAlt className="w-4 h-4" />
-              <span>{post.location}</span>
-            </div>
-          )}
-
-          {post.servings && (
-            <div className="flex items-center space-x-2">
-              <FaUsers className="w-4 h-4" />
-              <span>{post.servings} servings</span>
-            </div>
-          )}
-
-          {post.calories && (
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 rounded-full bg-primary-light flex items-center justify-center">
-                <FaFire className="w-3 h-3 text-primary" />
+            )}
+            {post.prepTime && (
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary">Prep Time:</span>
+                <span className="font-medium text-text-primary">{post.prepTime}</span>
               </div>
-              <span>{post.calories} cal</span>
-            </div>
-          )}
+            )}
+            {post.difficulty && (
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary">Difficulty:</span>
+                <span className="font-medium text-text-primary">{post.difficulty}</span>
+              </div>
+            )}
+            {post.calories && (
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary">Calories:</span>
+                <span className="font-medium text-text-primary">{post.calories}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-divider">
+            <Link href={`/post/${post.id}`}>
+              <button className="text-text-secondary hover:text-text-primary text-sm">
+                View all {post.comments.toLocaleString()} comments
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
