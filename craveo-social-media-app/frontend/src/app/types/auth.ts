@@ -1,32 +1,47 @@
-export interface LoginFormData {
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  avatar: string;
+  bio?: string;
+  isVerified: boolean;
+  followers: number;
+  following: number;
+  posts: number;
+  createdAt: Date;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken?: string;
+}
+
+export interface LoginCredentials {
   email: string;
   password: string;
   rememberMe: boolean;
 }
 
-export interface RegisterFormData {
+export interface RegisterData {
   username: string;
   email: string;
   password: string;
-  confirmPassword: string;
   fullName: string;
-  agreeToTerms: boolean;
 }
 
-export interface AuthResponse {
-  success: boolean;
-  message?: string;
-  token?: string;
-  user?: {
-    id: string;
-    username: string;
-    email: string;
-    fullName: string;
-    avatar?: string;
-  };
+export interface AuthState {
+  user: User | null;
+  tokens: AuthTokens | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
 
-export interface AuthError {
-  field?: string;
-  message: string;
+export interface DecodedToken {
+  sub: string;
+  username: string;
+  email: string;
+  exp: number;
+  iat: number;
 }
