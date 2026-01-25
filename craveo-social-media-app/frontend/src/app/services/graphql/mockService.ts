@@ -1,9 +1,9 @@
 /**
- * Mock GraphQL Service
+ * Mock GraphQL Service with proper typing
  */
 
-import { Post, User, Comment, PaginatedPosts, PaginatedComments } from './graphql/types';
-import { mockPosts } from '../data/mockPosts';
+import { Post, User, Comment, PaginatedPosts, PaginatedComments } from './types';
+import { mockPosts } from '../../data/mockPosts';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -36,9 +36,9 @@ const mockUsers: User[] = [
   },
   {
     id: 'me',
-    username: 'yourusername',
-    email: 'you@example.com',
-    fullName: 'Your Name',
+    username: 'currentuser',
+    email: 'current@example.com',
+    fullName: 'Current User',
     avatar: '/images/persons/person3.png',
     bio: 'Welcome to my food journey!',
     isVerified: false,
@@ -226,6 +226,7 @@ export const mockGraphQL = {
   },
 };
 
+// Export hooks for components
 export const useMockGraphQL = () => {
   return mockGraphQL;
 };

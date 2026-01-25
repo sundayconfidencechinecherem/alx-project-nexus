@@ -58,14 +58,18 @@ export default function CreatePostPage() {
     const postId = `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Simulate saving to database
+    console.log('📤 Post saved to database:', { ...postData, id: postId });
     
     // Simulate image upload (if any)
     if (postData.hasImage) {
+      console.log('🖼️ Image uploaded to cloud storage');
     }
     
     // Simulate updating feed cache
+    console.log('🔄 Feed cache updated');
     
     // Simulate sending notifications to followers
+    console.log('🔔 Notifications sent to followers');
     
     return postId;
   };
@@ -92,45 +96,11 @@ export default function CreatePostPage() {
       isSaved: false,
     };
     
+    console.log('📝 Creating post:', postData);
     
     try {
       // Simulate API call
       const postId = await simulateAPICall(postData);
-      
-      // Save post to localStorage for immediate display in feed
-      const newPost = {
-        id: postId,
-        user: {
-          id: 'current-user',
-          username: 'you',
-          fullName: 'You',
-          avatar: '/images/persons/person3.png',
-          isVerified: true,
-        },
-        image: imagePreview || '/images/food/default.png',
-        caption,
-        tags,
-        cuisine,
-        prepTime,
-        difficulty,
-        calories: calories ? parseInt(calories) : undefined,
-        servings: servings ? parseInt(servings) : undefined,
-        location,
-        likes: 0,
-        comments: 0,
-        isLiked: false,
-        isSaved: false,
-        createdAt: new Date().toISOString(),
-      };
-      
-      // Get existing recent posts or create new array
-      const existingPosts = JSON.parse(localStorage.getItem('recent_craveo_posts') || '[]');
-      existingPosts.unshift(newPost); // Add new post to beginning
-      
-      // Keep only last 5 posts
-      const recentPosts = existingPosts.slice(0, 5);
-      localStorage.setItem('recent_craveo_posts', JSON.stringify(recentPosts));
-      
       
       // Set success states
       setNewPostId(postId);
@@ -141,6 +111,7 @@ export default function CreatePostPage() {
         setShowSuccessOptions(true);
       }, 1000);
       
+      console.log('✅ Post created successfully! ID:', postId);
       
     } catch (error) {
       console.error('❌ Error creating post:', error);
@@ -151,8 +122,10 @@ export default function CreatePostPage() {
   };
 
   const handleViewPost = () => {
+    // In real app: router.push(`/post/${newPostId}`);
     alert(`Would navigate to post: /post/${newPostId}`);
-    router.push('/');
+    // For now, show a mock post view
+    router.push('/'); // Redirect to home where new post would appear
   };
 
   const handleCreateAnother = () => {
@@ -219,21 +192,21 @@ export default function CreatePostPage() {
                 
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-purple-600">💾</span>
+                    <span className="text-purple-600">👥</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Saved to local feed</p>
-                    <p className="text-sm text-gray-500">Available immediately on home page</p>
+                    <p className="font-medium text-gray-900">Notifying your followers</p>
+                    <p className="text-sm text-gray-500">123 followers will see your post</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-yellow-600">🔔</span>
+                    <span className="text-yellow-600">🔍</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Notifying followers</p>
-                    <p className="text-sm text-gray-500">123 followers will see your post</p>
+                    <p className="font-medium text-gray-900">Indexing for search</p>
+                    <p className="text-sm text-gray-500">Your post will appear in search results</p>
                   </div>
                 </div>
               </div>
@@ -243,11 +216,11 @@ export default function CreatePostPage() {
             {showSuccessOptions && (
               <div className="space-y-4">
                 <button
-                  onClick={handleGoHome}
+                  onClick={handleViewPost}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center gap-3"
                 >
-                  <FaHome />
-                  Go to Home Feed (See Your Post!)
+                  <FaEye />
+                  View Your Post
                 </button>
                 
                 <button
@@ -257,8 +230,35 @@ export default function CreatePostPage() {
                   <FaCamera />
                   Create Another Post
                 </button>
+                
+                <button
+                  onClick={handleGoHome}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center gap-3"
+                >
+                  <FaHome />
+                  Go to Home Feed
+                </button>
               </div>
             )}
+
+            {/* Stats Preview */}
+            <div className="mt-8 bg-gray-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Post Statistics (Live)</h3>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="text-2xl font-bold text-gray-900">0</div>
+                  <div className="text-sm text-gray-500">Likes</div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="text-2xl font-bold text-gray-900">0</div>
+                  <div className="text-sm text-gray-500">Comments</div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="text-2xl font-bold text-gray-900">123</div>
+                  <div className="text-sm text-gray-500">Views</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </ProtectedRoute>
@@ -533,8 +533,8 @@ export default function CreatePostPage() {
                 <span>Add relevant tags to help others discover your post</span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2">💾</span>
-                <span>Your post will appear immediately in the home feed</span>
+                <span className="mr-2">⭐</span>
+                <span>Be honest about the difficulty level and preparation time</span>
               </li>
             </ul>
           </div>

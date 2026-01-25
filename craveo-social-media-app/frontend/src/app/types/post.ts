@@ -1,45 +1,37 @@
 export interface User {
-  id: string
-  name: string
-  username: string
-  avatar: string
-  isVerified?: boolean
-  followers?: number
-  following?: number
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  name?: string; // Add name as optional for backward compatibility
+  avatar: string;
+  bio?: string;
+  isVerified: boolean;
+  followers: number;
+  following: number;
+  posts: number;
+  createdAt: Date | string;
 }
 
 export interface Post {
-  id: string
-  user: User
-  imageUrl: string
-  caption: string
-  likes: number
-  comments: number
-  shares: number
-  isLiked: boolean
-  isSaved: boolean
-  createdAt: Date | string
-  tags: string[]
-  location?: string
-  cuisine?: string
-  prepTime?: string
-  difficulty?: 'Easy' | 'Medium' | 'Hard'
-  calories?: number
-  servings?: number
+  id: string;
+  user: User;
+  imageUrl: string;
+  caption: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  isLiked: boolean;
+  isSaved: boolean;
+  createdAt: Date | string;
+  tags: string[];
+  location?: string;
+  cuisine?: string;
+  prepTime?: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  calories?: number;
+  servings?: number;
 }
 
-export interface Comment {
-  id: string
-  user: User
-  content: string
-  likes: number
-  createdAt: Date | string
-  replies?: Comment[]
-}
-
-export interface Like {
-  id: string
-  user: User
-  postId: string
-  createdAt: Date
-}
+// For backward compatibility, export old types as aliases
+export type { User as PostUser, Post as PostType };

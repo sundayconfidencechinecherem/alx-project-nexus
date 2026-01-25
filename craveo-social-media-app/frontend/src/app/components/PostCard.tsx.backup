@@ -165,7 +165,7 @@ export default function PostCard({ post, onLike, onComment, onShare, onSave }: P
               className="flex items-center space-x-2 text-text-secondary hover:text-text-primary"
             >
               <FaShare className="w-6 h-6" />
-              <span className="font-medium">{(post.shares || 0).toLocaleString()}</span>
+              <span className="font-medium">{post.shares.toLocaleString()}</span>
             </button>
           </div>
           

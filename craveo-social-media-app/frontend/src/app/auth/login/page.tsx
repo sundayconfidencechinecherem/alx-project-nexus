@@ -9,7 +9,7 @@ import Input from '@/app/components/Input';
 import Button from '@/app/components/Button';
 import { useAuth } from '@/app/hooks/useAuth';
 import { LoginCredentials } from '@/app/types/auth';
-import { AuthRoute } from '@/app/components/ProtectedRoute';
+import { AuthRoute } from "@/app/components/AuthRoute";;
 
 export default function LoginPage() {
   const [authError, setAuthError] = useState<string>('');
@@ -61,7 +61,6 @@ export default function LoginPage() {
                 size="lg"
                 icon={<FaGoogle className="text-red-500" />}
                 className="hover:shadow-sm"
-                onClick={() => console.log('Google login')}
                 disabled={isLoading}
               >
                 Google
@@ -71,7 +70,6 @@ export default function LoginPage() {
                 size="lg"
                 icon={<FaFacebook className="text-blue-600" />}
                 className="hover:shadow-sm"
-                onClick={() => console.log('Facebook login')}
                 disabled={isLoading}
               >
                 Facebook
@@ -81,7 +79,6 @@ export default function LoginPage() {
                 size="lg"
                 icon={<FaApple />}
                 className="hover:shadow-sm"
-                onClick={() => console.log('Apple login')}
                 disabled={isLoading}
               >
                 Apple

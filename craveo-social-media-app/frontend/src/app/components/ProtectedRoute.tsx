@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
 
@@ -26,10 +26,21 @@ export default function ProtectedRoute({
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // Don't redirect during initial loading
-    if (isLoading) return;
+    // Add a small delay to ensure auth state is properly loaded
+    const timer = setTimeout(() => {
+      setChecked(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!checked || isLoading) {
+      return;
+    }
 
     // Check if authentication is required
     if (requireAuth && !isAuthenticated) {
@@ -48,95 +59,34 @@ export default function ProtectedRoute({
     // Check if admin role is required (placeholder for future implementation)
     if (requireAdmin && isAuthenticated) {
       // In real app, check user roles
-      // router.push('/unauthorized');
-      return;
+      // For now, just pass through
     }
+  }, [isAuthenticated, isLoading, user, requireAuth, requireVerified, requireAdmin, router, pathname, redirectTo, checked]);
 
-    // If user is authenticated but on login/register page, redirect to home
-    if (isAuthenticated && (pathname === '/auth/login' || pathname === '/auth/register')) {
-      const redirect = sessionStorage.getItem('redirectAfterLogin');
-      router.push(redirect || '/');
-      sessionStorage.removeItem('redirectAfterLogin');
-    }
-  }, [isAuthenticated, isLoading, router, pathname, requireAuth, requireVerified, requireAdmin, redirectTo, user]);
-
-  // Show loading state
-  if (isLoading) {
+  // Show loading
+  if (isLoading || !checked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-app-bg">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-text-secondary">Loading authentication...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-600">Checking authentication...</p>
         </div>
       </div>
     );
   }
 
-  // Show nothing while redirecting
-  if (requireAuth && !isAuthenticated) {
-    return null;
+  // Show content if authenticated (or if auth not required)
+  if (!requireAuth || isAuthenticated) {
+    return <>{children}</>;
   }
 
-  // Check additional requirements
-  if (requireVerified && isAuthenticated && !user?.isVerified) {
-    return null;
-  }
-
-  if (requireAdmin && isAuthenticated) {
-    // In real app, check admin role
-    return null;
-  }
-
-  return <>{children}</>;
-}
-
-/**
- * AuthRoute component - Only accessible when NOT authenticated
- * Used for login/register pages
- */
-export function AuthRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+  // Show redirecting message
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+        <p className="mt-2 text-sm text-gray-600">Redirecting to login...</p>
       </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return null;
-  }
-
-  return <>{children}</>;
-}
-
-/**
- * VerifiedRoute component - Only accessible to verified users
- */
-export function VerifiedRoute({ children }: { children: React.ReactNode }) {
-  return (
-    <ProtectedRoute requireAuth requireVerified>
-      {children}
-    </ProtectedRoute>
-  );
-}
-
-/**
- * AdminRoute component - Only accessible to admin users
- */
-export function AdminRoute({ children }: { children: React.ReactNode }) {
-  return (
-    <ProtectedRoute requireAuth requireAdmin>
-      {children}
-    </ProtectedRoute>
+    </div>
   );
 }

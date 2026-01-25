@@ -92,7 +92,6 @@ export default function ProfilePage() {
   };
 
   const handleAvatarChange = (file: File) => {
-    console.log('Changing avatar to:', file.name);
     const reader = new FileReader();
     reader.onloadend = () => {
       setUser(prev => ({
@@ -146,8 +145,6 @@ export default function ProfilePage() {
             <PostGrid 
               posts={userPosts} 
               type={activeTab === 'posts' ? 'grid' : 'list'}
-              onLike={(postId) => console.log('Liked:', postId)}
-              onSave={(postId) => console.log('Saved:', postId)}
             />
           </div>
         </div>

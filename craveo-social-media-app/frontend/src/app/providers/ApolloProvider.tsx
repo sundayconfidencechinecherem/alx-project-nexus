@@ -1,8 +1,9 @@
 'use client';
 
+// Correct import for Apollo Client v4
 import { ApolloProvider as ApolloClientProvider } from '@apollo/client/react';
 import { ReactNode } from 'react';
-import { apolloClientInstance } from '../services/apollo-client';
+import { apolloClient } from '../services/apollo-client';
 
 interface ApolloProviderProps {
   children: ReactNode;
@@ -10,7 +11,7 @@ interface ApolloProviderProps {
 
 export default function ApolloProvider({ children }: ApolloProviderProps) {
   return (
-    <ApolloClientProvider client={apolloClientInstance}>
+    <ApolloClientProvider client={apolloClient}>
       {children}
     </ApolloClientProvider>
   );

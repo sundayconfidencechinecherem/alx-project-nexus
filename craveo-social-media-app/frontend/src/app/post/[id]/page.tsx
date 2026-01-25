@@ -11,16 +11,13 @@ import {
   FaUtensils,
   FaClock,
   FaFire,
-  FaUsers,
   FaMapMarkerAlt,
-  FaExternalLinkAlt,
   FaPrint,
   FaFlag
 } from 'react-icons/fa';
 import Link from 'next/link';
 import Button from '@/app/components/Button';
 import CommentsSection from '@/app/components/CommentsSection';
-import PostCard from '@/app/components/PostCard';
 import { mockPosts } from '@/app/data/mockPosts';
 import { Post } from '@/app/types/post';
 import { Comment } from '@/app/types/comment';
@@ -31,78 +28,21 @@ const MOCK_COMMENTS: Comment[] = [
     id: 'comment-1',
     user: {
       id: 'user-1',
-      name: 'Food Critic',
       username: 'foodcritic',
+      email: 'critic@example.com',
+      fullName: 'Food Critic',
       avatar: '/images/persons/chef1.png',
       isVerified: true,
+      followers: 1000,
+      following: 200,
+      posts: 50,
+      createdAt: new Date().toISOString(),
     },
-    content: 'This looks absolutely delicious! Could you share the exact measurements for the spices?',
+    content: 'This looks absolutely delicious! Could you share the exact measurements?',
     likes: 42,
     isLiked: false,
     replies: 2,
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    repliesList: [
-      {
-        id: 'reply-1',
-        user: {
-          id: 'me',
-          name: 'Your Name',
-          username: 'yourusername',
-          avatar: '/images/persons/person3.png',
-          isVerified: false,
-        },
-        content: 'Sure! I used 1 tsp of paprika, 1/2 tsp of cumin, and 1/4 tsp of cayenne pepper.',
-        likes: 8,
-        isLiked: true,
-        replies: 0,
-        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-      },
-      {
-        id: 'reply-2',
-        user: {
-          id: 'user-3',
-          name: 'Home Cook',
-          username: 'homecook',
-          avatar: '/images/persons/person1.png',
-          isVerified: false,
-        },
-        content: 'I tried this recipe and it turned out amazing! Thanks for sharing!',
-        likes: 15,
-        isLiked: false,
-        replies: 0,
-        createdAt: new Date(Date.now() - 30 * 60 * 1000),
-      },
-    ],
-  },
-  {
-    id: 'comment-2',
-    user: {
-      id: 'user-2',
-      name: 'Chef Expert',
-      username: 'chefexpert',
-      avatar: '/images/persons/chef2.png',
-      isVerified: true,
-    },
-    content: 'Great technique! Have you tried using fresh herbs instead of dried? Makes a huge difference.',
-    likes: 28,
-    isLiked: true,
-    replies: 1,
-    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-  },
-  {
-    id: 'comment-3',
-    user: {
-      id: 'user-4',
-      name: 'Beginner Cook',
-      username: 'beginnercook',
-      avatar: '/images/persons/person2.png',
-      isVerified: false,
-    },
-    content: 'This seems a bit complicated for me. Any tips for beginners?',
-    likes: 12,
-    isLiked: false,
-    replies: 0,
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
   },
 ];
 
@@ -129,7 +69,7 @@ export default function SinglePostPage() {
       setIsLiked(foundPost.isLiked);
       setIsSaved(foundPost.isSaved);
       
-      // Get related posts (same cuisine or tags)
+      // Get related posts
       const related = mockPosts
         .filter(p => 
           p.id !== postId && 
@@ -175,10 +115,15 @@ export default function SinglePostPage() {
       id: `comment-${Date.now()}`,
       user: {
         id: 'me',
-        name: 'Your Name',
         username: 'yourusername',
+        email: 'you@example.com',
+        fullName: 'Your Name',
         avatar: '/images/persons/person3.png',
         isVerified: false,
+        followers: 1248,
+        following: 256,
+        posts: 34,
+        createdAt: new Date().toISOString(),
       },
       content,
       likes: 0,
@@ -187,33 +132,6 @@ export default function SinglePostPage() {
       createdAt: new Date(),
     };
     setComments([newComment, ...comments]);
-  };
-
-  const handleLikeComment = (commentId: string) => {
-    setComments(prev => prev.map(comment => 
-      comment.id === commentId 
-        ? { ...comment, isLiked: !comment.isLiked, likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1 }
-        : comment
-    ));
-  };
-
-  const handleReplyToComment = (commentId: string, content: string) => {
-    console.log(`Replying to ${commentId}: ${content}`);
-    // In real app, this would update the comment's replies
-  };
-
-  const formatDate = (dateInput: Date | string) => {
-    // Convert to Date object if it's a string
-    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-    
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   if (isLoading) {
@@ -330,7 +248,7 @@ export default function SinglePostPage() {
                   <Link href={`/profile/${post.user.id}`}>
                     <img
                       src={post.user.avatar}
-                      alt={post.user.name}
+                      alt={post.user.fullName}
                       className="w-12 h-12 rounded-full object-cover hover:opacity-90 transition-opacity cursor-pointer"
                     />
                   </Link>
@@ -339,13 +257,13 @@ export default function SinglePostPage() {
                       href={`/profile/${post.user.id}`}
                       className="flex items-center gap-1 hover:opacity-80"
                     >
-                      <span className="font-bold text-text-primary">{post.user.name}</span>
+                      <span className="font-bold text-text-primary">{post.user.fullName}</span>
                       {post.user.isVerified && (
                         <span className="text-xs px-1.5 py-0.5 bg-primary text-white rounded-full">✓</span>
                       )}
                     </Link>
                     <div className="text-sm text-text-secondary">
-                      @{post.user.username} • {formatDate(post.createdAt)}
+                      @{post.user.username}
                     </div>
                   </div>
                 </div>
@@ -353,10 +271,6 @@ export default function SinglePostPage() {
                   <FaFlag />
                 </button>
               </div>
-
-              <h1 className="text-2xl font-bold text-text-primary mb-4">
-                {post.caption.split('\n')[0]}
-              </h1>
 
               <p className="text-text-primary whitespace-pre-line mb-6">
                 {post.caption}
@@ -460,8 +374,6 @@ export default function SinglePostPage() {
               comments={comments}
               postId={postId}
               onAddComment={handleAddComment}
-              onLikeComment={handleLikeComment}
-              onReplyToComment={handleReplyToComment}
             />
 
             {/* Related Posts */}

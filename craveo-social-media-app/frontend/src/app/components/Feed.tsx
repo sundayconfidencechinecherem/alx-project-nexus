@@ -25,23 +25,34 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
     threshold: 0.1,
   });
 
-  // Load more posts when scrolled to bottom
+  // Reset posts when initialPosts changes (when new posts are added from localStorage)
+  useEffect(() => {
+    if (initialPosts.length > 0) {
+    }
+    setPosts(initialPosts);
+    setPage(1); // Reset pagination
+    setHasMore(true); // Reset hasMore
+  }, [initialPosts]);
+
   useEffect(() => {
     if (inView && hasMore && !loading) {
       loadMorePosts();
     }
   }, [inView, hasMore, loading]);
 
-  // Simulate fetching posts from API
   const loadMorePosts = async () => {
+    // Don't load more if we only have initial posts (from localStorage)
+    if (posts.length <= initialPosts.length && initialPosts.length > 0) {
+      setHasMore(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
     try {
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Generate more mock posts
       const newPosts = generateMockPosts(page * 4, 4);
       
       if (newPosts.length === 0) {
@@ -58,7 +69,6 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
     }
   };
 
-  // Generate additional mock posts
   const generateMockPosts = (startIndex: number, count: number): Post[] => {
     const newPosts: Post[] = [];
     const foodImages = ['pasta.png', 'sushi.png', 'tacos.png', 'steak.png', 'rice.png', 'vlogerfood.png'];
@@ -71,17 +81,23 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
       const personImage = personImages[(startIndex + i) % personImages.length];
       const cuisine = cuisines[(startIndex + i) % cuisines.length];
       const difficulty = difficulties[(startIndex + i) % difficulties.length];
+      const fullName = `Chef ${['Maria', 'Ken', 'Sofia', 'Alex', 'Liam'][(startIndex + i) % 5]}`;
       
       newPosts.push({
-        id: `post-${startIndex + i + 1}`,
+        id: `mock-post-${startIndex + i + 1}`,
         user: {
-          id: `user-${startIndex + i + 1}`,
-          name: `Chef ${['Maria', 'Ken', 'Sofia', 'Alex', 'Liam'][(startIndex + i) % 5]}`,
+          id: `mock-user-${startIndex + i + 1}`,
           username: `chef${startIndex + i + 1}`,
+          email: `chef${startIndex + i + 1}@example.com`,
+          fullName: fullName,
+          name: fullName,
           avatar: `/images/persons/${personImage}`,
           isVerified: Math.random() > 0.5,
           followers: Math.floor(Math.random() * 10000) + 1000,
           following: Math.floor(Math.random() * 500) + 50,
+          posts: Math.floor(Math.random() * 100) + 10,
+          createdAt: new Date(),
+          bio: `Passionate ${cuisine.toLowerCase()} cuisine chef`,
         },
         imageUrl: `/images/food/${foodImage}`,
         caption: `Delicious ${cuisine.toLowerCase()} cuisine! Made with love and fresh ingredients. Perfect for sharing with friends and family. 🍽️ #${cuisine} #Foodie`,
@@ -104,9 +120,7 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
     return newPosts;
   };
 
-  // Handle post interactions
   const handleLike = (postId: string) => {
-    console.log('Liked post:', postId);
     setPosts(prev => prev.map(post => 
       post.id === postId 
         ? { ...post, likes: post.likes + 1, isLiked: true }
@@ -115,11 +129,9 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
   };
 
   const handleComment = (postId: string) => {
-    console.log('Comment on post:', postId);
   };
 
   const handleShare = (postId: string) => {
-    console.log('Share post:', postId);
   };
 
   const handleSave = (postId: string) => {
@@ -130,18 +142,22 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
     ));
   };
 
-  // Filter posts based on selected filter
   const filteredPosts = [...posts].sort((a, b) => {
     if (filter === 'popular') {
       return b.likes - a.likes;
     }
-    // recent (default) - sort by date
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  // Debug: Log what posts we have
+  useEffect(() => {
+    
+    if (posts.length > 0) {
+    }
+  }, [posts, initialPosts]);
+
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Feed Header with Filters */}
       {showFilters && (
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -169,7 +185,6 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
             </div>
           </div>
           
-          {/* Cuisine Filters */}
           <div className="mt-6">
             <div className="text-sm text-text-secondary mb-2">Filter by cuisine:</div>
             <div className="flex flex-wrap gap-2">
@@ -186,7 +201,6 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
         </div>
       )}
 
-      {/* Error State */}
       {error && (
         <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
           <p className="text-error">{error}</p>
@@ -199,10 +213,8 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
         </div>
       )}
 
-      {/* Posts Grid */}
       {filteredPosts.length === 0 && !loading ? (
         <EmptyState 
-          onAction={() => console.log('Create post clicked')}
         />
       ) : (
         <div className="space-y-6">
@@ -217,7 +229,6 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
             />
           ))}
 
-          {/* Loading Skeletons */}
           {loading && (
             <>
               <SkeletonPost />
@@ -225,14 +236,12 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
             </>
           )}
 
-          {/* Infinite scroll trigger */}
-          {hasMore && !loading && (
+          {hasMore && !loading && posts.length >= initialPosts.length && (
             <div ref={ref} className="h-10 flex items-center justify-center">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           )}
 
-          {/* No more posts */}
           {!hasMore && posts.length > 0 && (
             <div className="text-center py-8">
               <p className="text-text-tertiary">You've reached the end! 🍽️</p>
@@ -242,10 +251,11 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
         </div>
       )}
 
-      {/* Posts Count */}
       {posts.length > 0 && (
         <div className="mt-8 text-center">
-          <p className="text-text-tertiary">Showing {posts.length} delicious posts</p>
+          <p className="text-text-tertiary">
+            Showing {posts.length} delicious posts • {initialPosts.length} from your activity
+          </p>
         </div>
       )}
     </div>

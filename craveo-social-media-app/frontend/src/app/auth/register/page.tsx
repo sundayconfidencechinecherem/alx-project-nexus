@@ -9,7 +9,7 @@ import Input from '@/app/components/Input';
 import Button from '@/app/components/Button';
 import { useAuth } from '@/app/hooks/useAuth';
 import { RegisterData } from '@/app/types/auth';
-import { AuthRoute } from '@/app/components/ProtectedRoute';
+import { AuthRoute } from "@/app/components/AuthRoute";;
 
 interface RegisterFormValues extends RegisterData {
   confirmPassword: string;
