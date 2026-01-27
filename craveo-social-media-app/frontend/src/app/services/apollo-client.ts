@@ -129,7 +129,7 @@ const httpLink = createHttpLink({
   credentials: 'include',
 });
 
-// Simple error handling using ApolloLink
+// error handling using ApolloLink
 const errorLink = new ApolloLink((operation, forward) => {
   return new Observable((observer) => {
     const subscription = forward(operation).subscribe({
@@ -150,7 +150,7 @@ const errorLink = new ApolloLink((operation, forward) => {
   });
 });
 
-// Decide which link to use
+// Decide which link to use ?
 const link = USE_MOCK_DATA
   ? ApolloLink.from([errorLink, createMockLink()])
   : ApolloLink.from([errorLink, httpLink]);

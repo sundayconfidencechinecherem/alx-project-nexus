@@ -1,6 +1,8 @@
+
+// Mock users
+
 import { Post, User } from '../types/post';
 
-// Mock users that match the User interface
 const mockUsers: User[] = [
   {
     id: '1',
@@ -13,7 +15,7 @@ const mockUsers: User[] = [
     followers: 12543,
     following: 342,
     posts: 87,
-    createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), // 1 year ago
+    createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
     bio: 'Passionate home cook sharing recipes from around the world.',
   },
   {
@@ -27,7 +29,7 @@ const mockUsers: User[] = [
     followers: 89215,
     following: 156,
     posts: 203,
-    createdAt: new Date(Date.now() - 730 * 24 * 60 * 60 * 1000), // 2 years ago
+    createdAt: new Date(Date.now() - 730 * 24 * 60 * 60 * 1000), 
     bio: 'Food scientist and cooking enthusiast.',
   },
   {
@@ -41,7 +43,7 @@ const mockUsers: User[] = [
     followers: 3241,
     following: 124,
     posts: 45,
-    createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // 6 months ago
+    createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), 
     bio: 'Home cook sharing family recipes.',
   },
   {
@@ -55,7 +57,7 @@ const mockUsers: User[] = [
     followers: 45218,
     following: 289,
     posts: 156,
-    createdAt: new Date(Date.now() - 545 * 24 * 60 * 60 * 1000), // 1.5 years ago
+    createdAt: new Date(Date.now() - 545 * 24 * 60 * 60 * 1000), 
     bio: 'Food photographer and recipe developer.',
   },
   {
@@ -69,105 +71,327 @@ const mockUsers: User[] = [
     followers: 1248,
     following: 256,
     posts: 34,
-    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 3 months ago
+    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), 
     bio: 'Welcome to my food journey! Sharing my kitchen experiments.',
   },
 ];
 
 export const mockPosts: Post[] = [
+
+  // RECIPE POSTS 
   {
     id: 'post-1',
     user: mockUsers[0],
     imageUrl: '/images/food/pasta.png',
-    caption: 'Homemade pasta from scratch! Used fresh eggs and semolina flour. The secret is in the resting time - let the dough rest for at least 30 minutes before rolling. 🍝 #Italian #Homemade #Pasta',
+    caption: 'Homemade pasta from scratch! Used fresh eggs and semolina flour. The secret is in the resting time - let the dough rest for at least 30 minutes before rolling. This recipe has been in my family for generations and I\'m excited to share it with you all today! Perfect for a cozy Sunday dinner with family.',
     likes: 2842,
     comments: 143,
     shares: 56,
     isLiked: false,
     isSaved: true,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    tags: ['Italian', 'Homemade', 'Pasta', 'Cooking', 'Foodie'],
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), 
+    tags: ['Italian', 'Homemade', 'Pasta', 'Cooking', 'Foodie', 'FamilyRecipe'],
     location: 'Rome, Italy',
     cuisine: 'Italian',
     prepTime: '2 hours',
     difficulty: 'Medium',
     calories: 650,
     servings: 4,
+    privacy: 'public',
+    title: 'Classic Homemade Pasta',
+    type: 'recipe',
+    recipeCategory: 'Main Course',
+    ingredients: [
+      '400g semolina flour',
+      '4 large eggs',
+      '1 tbsp olive oil',
+      '1 tsp salt',
+      'Extra flour for dusting'
+    ],
+    instructions: [
+      'Mix flour and salt on a clean surface',
+      'Create a well in the center and add eggs',
+      'Gradually incorporate flour into eggs',
+      'Knead for 10 minutes until smooth',
+      'Let rest for 30 minutes',
+      'Roll out and cut into desired shapes'
+    ]
   },
   {
     id: 'post-2',
     user: mockUsers[1],
     imageUrl: '/images/food/sushi.png',
-    caption: 'Omakase experience in Tokyo. The chef selects the best fish of the day. Each piece is a masterpiece! 🍣 #Sushi #Japanese #FoodTravel',
+    caption: 'Omakase experience in Tokyo. The chef selects the best fish of the day. Each piece is a masterpiece! This sushi platter features toro, uni, and otoro - the finest cuts available at the market this morning.',
     likes: 12485,
     comments: 842,
     shares: 324,
     isLiked: true,
     isSaved: false,
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-    tags: ['Japanese', 'Sushi', 'Omakase', 'Tokyo', 'FineDining'],
+    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000), 
+    tags: ['Japanese', 'Sushi', 'Omakase', 'Tokyo', 'FineDining', 'Seafood'],
     location: 'Tokyo, Japan',
     cuisine: 'Japanese',
-    prepTime: '30 mins',
+    prepTime: '45 mins',
     difficulty: 'Hard',
     calories: 420,
-    servings: 1,
+    servings: 2,
+    privacy: 'public',
+    title: 'Traditional Sushi Platter',
+    type: 'recipe',
+    recipeCategory: 'Appetizer',
+    ingredients: [
+      '300g sushi rice',
+      '200g fresh tuna',
+      '150g salmon',
+      '100g yellowtail',
+      'Nori sheets',
+      'Wasabi and soy sauce'
+    ],
+    instructions: [
+      'Prepare sushi rice according to package',
+      'Slice fish into thin pieces',
+      'Shape rice into nigiri pieces',
+      'Top with fish slices',
+      'Serve with wasabi and soy sauce'
+    ]
   },
+  //CONTENT POSTS (Non-recipe)
   {
     id: 'post-3',
     user: mockUsers[2],
-    imageUrl: '/images/food/tacos.png',
-    caption: 'Taco Tuesday is my favorite day! Made these with homemade tortillas and fresh salsa. Pro tip: double-cook your carnitas for extra crispiness! 🌮 #Mexican #Tacos #Homemade',
-    likes: 3241,
-    comments: 234,
-    shares: 89,
-    isLiked: false,
+    imageUrl: '/images/food/vlogerfood.png',
+    caption: 'Just discovered this amazing street food market in Bangkok! The flavors are incredible and the atmosphere is electric. This pad thai was cooked right in front of me with flames leaping from the wok! Definitely coming back tomorrow for more.',
+    likes: 5321,
+    comments: 324,
+    shares: 128,
+    isLiked: true,
     isSaved: true,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-    tags: ['Mexican', 'Tacos', 'Tuesday', 'Homemade', 'Spicy'],
-    location: 'Mexico City',
-    cuisine: 'Mexican',
-    prepTime: '1.5 hours',
-    difficulty: 'Medium',
-    calories: 320,
-    servings: 6,
+    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000), 
+    tags: ['StreetFood', 'Bangkok', 'Travel', 'FoodVlog', 'Adventure'],
+    location: 'Bangkok, Thailand',
+    privacy: 'public',
+    music: 'Chill Lo-fi Beats',
+    title: 'Bangkok Street Food Adventure',
+    type: 'content'
   },
   {
     id: 'post-4',
     user: mockUsers[3],
     imageUrl: '/images/food/steak.png',
-    caption: 'Perfect medium-rare steak! The key is bringing the steak to room temperature before cooking and letting it rest after. Reverse sear method works wonders! 🥩 #Steak #CookingTips #Grill',
+    caption: 'Perfect medium-rare steak! The key is bringing the steak to room temperature before cooking and letting it rest after. Reverse sear method works wonders! Cooked this beautiful ribeye on my new cast iron skillet - the crust is absolutely perfect.',
     likes: 8214,
     comments: 512,
     shares: 145,
     isLiked: true,
     isSaved: false,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    tags: ['Steak', 'Grill', 'CookingTips', 'American', 'Dinner'],
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), 
+    tags: ['Steak', 'Grill', 'CookingTips', 'American', 'Dinner', 'FoodPhotography'],
     location: 'Texas, USA',
     cuisine: 'American',
     prepTime: '45 mins',
-    difficulty: 'Easy',
+    difficulty: 'Medium',
     calories: 780,
     servings: 2,
+    privacy: 'friends',
+    title: 'Perfect Reverse Sear Steak',
+    type: 'recipe',
+    recipeCategory: 'Main Course',
+    ingredients: [
+      '2 ribeye steaks (1.5 inches thick)',
+      '2 tbsp coarse salt',
+      '1 tbsp black pepper',
+      '3 tbsp butter',
+      '4 garlic cloves',
+      'Fresh rosemary'
+    ],
+    instructions: [
+      'Season steaks generously',
+      'Preheat oven to 250°F',
+      'Bake until internal temp reaches 115°F',
+      'Sear in hot cast iron for 1 minute per side',
+      'Baste with butter, garlic, and rosemary',
+      'Rest for 10 minutes before serving'
+    ]
   },
   {
     id: 'post-5',
     user: mockUsers[4],
     imageUrl: '/images/food/rice.png',
-    caption: 'My take on Thai pineapple fried rice! Added extra cashews for crunch and fresh pineapple for sweetness. The turmeric gives it that beautiful golden color! 🍍 #Thai #FriedRice #Homemade',
+    caption: 'My take on Thai pineapple fried rice! Added extra cashews for crunch and fresh pineapple for sweetness. The turmeric gives it that beautiful golden color! This recipe is perfect for using up leftover rice and makes a great weeknight dinner.',
     likes: 842,
     comments: 67,
     shares: 23,
     isLiked: false,
     isSaved: false,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-    tags: ['Thai', 'FriedRice', 'Pineapple', 'Asian', 'Homemade'],
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), 
+    tags: ['Thai', 'FriedRice', 'Pineapple', 'Asian', 'Homemade', 'QuickMeal'],
     location: 'Home Kitchen',
     cuisine: 'Thai',
-    prepTime: '30 mins',
-    difficulty: 'Medium',
+    prepTime: '25 mins',
+    difficulty: 'Easy',
     calories: 450,
     servings: 4,
+    privacy: 'public',
+    title: 'Thai Pineapple Fried Rice',
+    type: 'recipe',
+    recipeCategory: 'Main Course',
+    ingredients: [
+      '3 cups cooked jasmine rice',
+      '1 cup pineapple chunks',
+      '1/2 cup cashews',
+      '2 eggs',
+      '1 onion, diced',
+      '2 tbsp soy sauce',
+      '1 tsp turmeric powder'
+    ],
+    instructions: [
+      'Scramble eggs and set aside',
+      'Sauté onions until translucent',
+      'Add rice and break up any clumps',
+      'Stir in turmeric and soy sauce',
+      'Add pineapple and cashews',
+      'Mix in scrambled eggs and serve'
+    ]
   },
+  // ===== MORE CONTENT POSTS =====
+  {
+    id: 'post-6',
+    user: mockUsers[0],
+    imageUrl: '/images/food/tacos.png',
+    caption: 'Taco Tuesday with friends! We set up a taco bar with all the fixings: homemade tortillas, three types of protein, and endless toppings. The carnitas were slow-cooked for 8 hours and were falling apart tender. Best Tuesday ever!',
+    likes: 3241,
+    comments: 234,
+    shares: 89,
+    isLiked: false,
+    isSaved: true,
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), 
+    tags: ['Mexican', 'Tacos', 'Tuesday', 'Homemade', 'Spicy', 'PartyFood'],
+    location: 'Mexico City',
+    privacy: 'friends',
+    music: 'Mexican Guitar',
+    title: 'Taco Tuesday Party',
+    type: 'content'
+  },
+  {
+    id: 'post-7',
+    user: mockUsers[1],
+    imageUrl: '/images/food/cheesecake.png', 
+    caption: 'New York style cheesecake with raspberry coulis. The secret to no cracks? Water bath baking and gradual cooling. This took me 3 attempts to perfect but so worth it! The texture is silky smooth and rich.',
+    likes: 6542,
+    comments: 421,
+    shares: 156,
+    isLiked: true,
+    isSaved: true,
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), 
+    tags: ['Dessert', 'Cheesecake', 'Baking', 'NewYorkStyle', 'SweetTreat'],
+    location: 'New York, USA',
+    cuisine: 'American',
+    prepTime: '5 hours (includes chilling)',
+    difficulty: 'Medium',
+    calories: 420,
+    servings: 12,
+    privacy: 'public',
+    title: 'Perfect New York Cheesecake',
+    type: 'recipe',
+    recipeCategory: 'Dessert',
+    ingredients: [
+      '900g cream cheese',
+      '250g sugar',
+      '4 eggs',
+      '200g sour cream',
+      '1 tsp vanilla extract',
+      'Graham cracker crust'
+    ],
+    instructions: [
+      'Mix cream cheese until smooth',
+      'Add sugar gradually',
+      'Incorporate eggs one at a time',
+      'Fold in sour cream and vanilla',
+      'Bake in water bath at 325°F for 1 hour',
+      'Cool gradually in oven'
+    ]
+  },
+  {
+    id: 'post-8',
+    user: mockUsers[2],
+    imageUrl: '/images/food/ramen.png', 
+    caption: 'Visited the famous ramen shop that only has 8 seats! Waited 45 minutes but it was absolutely worth it. The broth was simmered for 48 hours and the chashu melted in my mouth. An unforgettable culinary experience!',
+    likes: 4321,
+    comments: 289,
+    shares: 112,
+    isLiked: false,
+    isSaved: false,
+    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), 
+    tags: ['Ramen', 'Japan', 'FoodTravel', 'Noodles', 'Broth', 'Foodie'],
+    location: 'Kyoto, Japan',
+    privacy: 'public',
+    music: 'Japanese Ambient',
+    title: 'Kyoto Ramen Experience',
+    type: 'content'
+  },
+  {
+    id: 'post-9',
+    user: mockUsers[3],
+    imageUrl: '/images/food/pizza.png',
+    caption: 'Neapolitan pizza made in my new outdoor pizza oven! The crust puffed up beautifully with those perfect leopard spots. Topped with San Marzano tomatoes, fresh mozzarella, and basil from the garden. Temperature reached 900°F!',
+    likes: 7521,
+    comments: 543,
+    shares: 201,
+    isLiked: true,
+    isSaved: true,
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), 
+    tags: ['Pizza', 'Neapolitan', 'OutdoorCooking', 'Italian', 'Homemade'],
+    location: 'Home Garden',
+    cuisine: 'Italian',
+    prepTime: '24 hours (dough fermentation)',
+    difficulty: 'Hard',
+    calories: 850,
+    servings: 4,
+    privacy: 'friends',
+    title: 'Authentic Neapolitan Pizza',
+    type: 'recipe',
+    recipeCategory: 'Main Course',
+    ingredients: [
+      '500g tipo 00 flour',
+      '325ml water',
+      '10g salt',
+      '3g fresh yeast',
+      'San Marzano tomatoes',
+      'Fresh mozzarella',
+      'Basil leaves'
+    ],
+    instructions: [
+      'Mix dough and ferment for 24 hours',
+      'Preheat pizza oven to 900°F',
+      'Stretch dough by hand',
+      'Top with tomatoes and cheese',
+      'Bake for 60-90 seconds',
+      'Finish with fresh basil'
+    ]
+  },
+  {
+    id: 'post-10',
+    user: mockUsers[4],
+    imageUrl: '/images/food/smoothie.png',
+    caption: 'Morning smoothie bowl to start the day right! Packed with antioxidants from berries, healthy fats from avocado, and protein from Greek yogurt. Topped with granola, chia seeds, and edible flowers. So refreshing!',
+    likes: 1245,
+    comments: 98,
+    shares: 45,
+    isLiked: false,
+    isSaved: true,
+    createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), 
+    tags: ['Smoothie', 'Healthy', 'Breakfast', 'Vegan', 'Wellness', 'Superfood'],
+    location: 'Home Kitchen',
+    privacy: 'private',
+    music: 'Morning Meditation',
+    title: 'Power Breakfast Smoothie Bowl',
+    type: 'content'
+  }
 ];
+
+// Create arrays for easy filtering
+export const recipePosts = mockPosts.filter(post => post.type === 'recipe');
+export const contentPosts = mockPosts.filter(post => post.type === 'content');
+
+//Get user's own posts
+export const myPosts = mockPosts.filter(post => post.user.id === 'me');

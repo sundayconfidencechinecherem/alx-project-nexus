@@ -29,7 +29,6 @@ export default function ProtectedRoute({
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // Add a small delay to ensure auth state is properly loaded
     const timer = setTimeout(() => {
       setChecked(true);
     }, 300);
@@ -58,8 +57,7 @@ export default function ProtectedRoute({
 
     // Check if admin role is required (placeholder for future implementation)
     if (requireAdmin && isAuthenticated) {
-      // In real app, check user roles
-      // For now, just pass through
+      
     }
   }, [isAuthenticated, isLoading, user, requireAuth, requireVerified, requireAdmin, router, pathname, redirectTo, checked]);
 

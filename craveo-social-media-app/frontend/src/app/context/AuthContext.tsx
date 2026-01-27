@@ -192,7 +192,7 @@ const mockRegister = async (data: RegisterData): Promise<{ user: User; tokens: A
     username: data.username,
     email: data.email,
     fullName: data.fullName,
-    avatar: '/images/persons/person3.png',
+    avatar: '/images/persons/person.png',
     isVerified: false,
     followers: 0,
     following: 0,

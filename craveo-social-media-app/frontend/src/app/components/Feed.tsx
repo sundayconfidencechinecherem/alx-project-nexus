@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import PostCard from './PostCard';
@@ -7,13 +6,17 @@ import SkeletonPost from './SkeletonPost';
 import EmptyState from './EmptyState';
 import { Post } from '../types/post';
 import { mockPosts } from '../data/mockPosts';
+import PromotionScrollCard from './PromotionScrollCard';
 
 interface FeedProps {
   initialPosts?: Post[];
   showFilters?: boolean;
 }
 
-export default function Feed({ initialPosts = [], showFilters = true }: FeedProps) {
+export default function Feed({ 
+  initialPosts = [], 
+  showFilters = false 
+}: FeedProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -25,13 +28,10 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
     threshold: 0.1,
   });
 
-  // Reset posts when initialPosts changes (when new posts are added from localStorage)
   useEffect(() => {
-    if (initialPosts.length > 0) {
-    }
     setPosts(initialPosts);
-    setPage(1); // Reset pagination
-    setHasMore(true); // Reset hasMore
+    setPage(1);
+    setHasMore(true);
   }, [initialPosts]);
 
   useEffect(() => {
@@ -41,7 +41,6 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
   }, [inView, hasMore, loading]);
 
   const loadMorePosts = async () => {
-    // Don't load more if we only have initial posts (from localStorage)
     if (posts.length <= initialPosts.length && initialPosts.length > 0) {
       setHasMore(false);
       return;
@@ -129,9 +128,11 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
   };
 
   const handleComment = (postId: string) => {
+    // Handle comment logic
   };
 
   const handleShare = (postId: string) => {
+    // Handle share logic
   };
 
   const handleSave = (postId: string) => {
@@ -149,64 +150,73 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  // Debug: Log what posts we have
-  useEffect(() => {
+
+  const getFeedWithPromotions = () => {
+    const items: Array<{ 
+      type: 'post', 
+      data: Post 
+    } | { 
+      type: 'promotion-scroll-card',
+      data: null
+    }> = [];
     
-    if (posts.length > 0) {
-    }
-  }, [posts, initialPosts]);
+    filteredPosts.forEach((post, index) => {
+      // Add the post
+      items.push({ type: 'post', data: post });
+      if ((index + 1) % 3 === 0) {
+        items.push({ 
+          type: 'promotion-scroll-card',
+          data: null 
+        });
+      }
+    });
+    
+    return items;
+  };
+
+  const feedItems = getFeedWithPromotions();
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       {showFilters && (
         <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-text-primary">Food Feed</h1>
-              <p className="text-text-secondary mt-2">Discover delicious posts from food lovers worldwide</p>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-text-secondary">Sort by:</div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-text-secondary">Sort by:</span>
               <div className="flex bg-surface-hover rounded-lg p-1">
                 <button
                   onClick={() => setFilter('recent')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'recent' ? 'bg-primary text-white' : 'text-text-secondary hover:text-text-primary'}`}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    filter === 'recent' 
+                      ? 'bg-primary text-white shadow-sm' 
+                      : 'text-text-secondary hover:text-text-primary hover:bg-white'
+                  }`}
                 >
                   Recent
                 </button>
                 <button
                   onClick={() => setFilter('popular')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filter === 'popular' ? 'bg-primary text-white' : 'text-text-secondary hover:text-text-primary'}`}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    filter === 'popular' 
+                      ? 'bg-primary text-white shadow-sm' 
+                      : 'text-text-secondary hover:text-text-primary hover:bg-white'
+                  }`}
                 >
                   Popular
                 </button>
               </div>
             </div>
           </div>
-          
-          <div className="mt-6">
-            <div className="text-sm text-text-secondary mb-2">Filter by cuisine:</div>
-            <div className="flex flex-wrap gap-2">
-              {['All', 'Italian', 'Japanese', 'Mexican', 'American', 'Thai', 'Dessert'].map((cuisine) => (
-                <button
-                  key={cuisine}
-                  className="px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-hover transition-colors"
-                >
-                  {cuisine}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 
+      {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
-          <p className="text-error">{error}</p>
+          <p className="text-error text-sm">{error}</p>
           <button
             onClick={loadMorePosts}
-            className="mt-2 text-sm text-error hover:underline"
+            className="mt-2 text-sm text-error hover:underline font-medium"
           >
             Try again
           </button>
@@ -214,21 +224,32 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
       )}
 
       {filteredPosts.length === 0 && !loading ? (
-        <EmptyState 
-        />
+        <EmptyState />
       ) : (
         <div className="space-y-6">
-          {filteredPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onLike={handleLike}
-              onComment={handleComment}
-              onShare={handleShare}
-              onSave={handleSave}
-            />
-          ))}
+          {feedItems.map((item, index) => {
+            if (item.type === 'post') {
+              return (
+                <PostCard
+                  key={`post-${item.data.id}`}
+                  post={item.data}
+                  onLike={handleLike}
+                  onComment={handleComment}
+                  onShare={handleShare}
+                  onSave={handleSave}
+                />
+              );
+            } else {
+           
+              return (
+                <div key={`promotion-${index}`} className="my-6 xl:hidden">
+                  <PromotionScrollCard />
+                </div>
+              );
+            }
+          })}
 
+          {/* Loading Skeletons */}
           {loading && (
             <>
               <SkeletonPost />
@@ -236,25 +257,34 @@ export default function Feed({ initialPosts = [], showFilters = true }: FeedProp
             </>
           )}
 
+          {/* Infinite Scroll Trigger */}
           {hasMore && !loading && posts.length >= initialPosts.length && (
-            <div ref={ref} className="h-10 flex items-center justify-center">
+            <div ref={ref} className="h-16 flex items-center justify-center">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           )}
 
+          {/* End of Feed */}
           {!hasMore && posts.length > 0 && (
             <div className="text-center py-8">
-              <p className="text-text-tertiary">You've reached the end! 🍽️</p>
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
+                <span className="text-2xl">🍽️</span>
+              </div>
+              <p className="text-text-tertiary font-medium">You've reached the end!</p>
               <p className="text-text-secondary text-sm mt-1">Check back later for more delicious posts</p>
             </div>
           )}
         </div>
       )}
 
+      {/* Posts Count */}
       {posts.length > 0 && (
         <div className="mt-8 text-center">
-          <p className="text-text-tertiary">
-            Showing {posts.length} delicious posts • {initialPosts.length} from your activity
+          <p className="text-text-tertiary text-sm">
+            Showing <span className="font-medium text-text-primary">{posts.length}</span> delicious posts
+            {initialPosts.length > 0 && (
+              <span> • <span className="font-medium text-text-primary">{initialPosts.length}</span> from your activity</span>
+            )}
           </p>
         </div>
       )}

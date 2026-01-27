@@ -48,13 +48,13 @@ export default function ProfileHeader({
     if (file && onAvatarChange) {
       setIsUploading(true);
       onAvatarChange(file);
-      // In real app, this would be after successful upload
+      
       setTimeout(() => setIsUploading(false), 1000);
     }
   };
 
   const handleSaveBio = () => {
-    // In real app, save bio to API
+
     setIsEditingBio(false);
   };
 
