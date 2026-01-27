@@ -1,309 +1,818 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { FaUser, FaEnvelope, FaLock, FaCheck } from 'react-icons/fa';
 import Link from 'next/link';
+import Image from 'next/image';
+import { FaGoogle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
-import Input from '@/app/components/Input';
-import Button from '@/app/components/Button';
-import { useAuth } from '@/app/hooks/useAuth';
-import { RegisterData } from '@/app/types/auth';
-import { AuthRoute } from "@/app/components/AuthRoute";;
-
-interface RegisterFormValues extends RegisterData {
-  confirmPassword: string;
-  agreeToTerms: boolean;
-}
+import { useAuth } from '../../hooks/useAuth';
 
 export default function RegisterPage() {
-  const [authError, setAuthError] = useState<string>('');
-  const [passwordStrength, setPasswordStrength] = useState<number>(0);
-  const { register: authRegister, isLoading } = useAuth();
   const router = useRouter();
-  
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-    trigger,
-  } = useForm<RegisterFormValues>({
-    defaultValues: {
-      username: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      fullName: '',
-      agreeToTerms: false,
-    },
+  const { register, isAuthenticated, isLoading } = useAuth();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    dob: '',
+    agreeToTerms: false
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const password = watch('password');
-  const confirmPassword = watch('confirmPassword');
+  // Redirect if already authenticated
+  if (isAuthenticated && !isLoading) {
+    router.push('/');
+    return null;
+  }
 
-  // Check password strength
-  const checkPasswordStrength = (password: string) => {
-    let strength = 0;
-    if (password.length >= 8) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 25;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
-    setPasswordStrength(strength);
-    return strength;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
+    });
+    if (error) setError('');
   };
 
-  const onSubmit = async (data: RegisterFormValues) => {
-    setAuthError('');
-    
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLoading(true);
+    setError('');
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    // Validate password strength
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
+
+    // Validate terms agreement
+    if (!formData.agreeToTerms) {
+      setError('You must agree to the terms and conditions');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Extract only the fields needed for registration
-      const registerData: RegisterData = {
-        username: data.username,
-        email: data.email,
-        password: data.password,
-        fullName: data.fullName,
-      };
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          username: formData.username,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      if (data.success && data.user) {
+        // Store in localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('token', data.token);
+        
+        // Call your auth context register function
+        await register({
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          username: formData.username
+        });
+        
+        // Redirect to home
+        router.push('/');
+        router.refresh();
+      } else {
+        throw new Error(data.message || 'Registration failed');
+      }
       
-      await authRegister(registerData);
-      router.push('/');
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'An error occurred during registration');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getPasswordStrengthColor = (strength: number) => {
-    if (strength >= 75) return 'bg-success';
-    if (strength >= 50) return 'bg-warning';
-    if (strength >= 25) return 'bg-error/60';
-    return 'bg-gray-300';
-  };
-
-  const getPasswordStrengthText = (strength: number) => {
-    if (strength >= 75) return 'Strong';
-    if (strength >= 50) return 'Medium';
-    if (strength >= 25) return 'Weak';
-    return 'Very weak';
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-app-bg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-text-secondary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AuthRoute>
-      <div className="min-h-screen bg-app-bg flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          {/* Logo/Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
-              <span className="text-2xl font-bold text-white">C</span>
-            </div>
-            <h1 className="text-3xl font-bold text-text-primary">Join Craveo</h1>
-            <p className="text-text-secondary mt-2">Create your food community account</p>
-          </div>
-
-          {/* Error Message */}
-          {authError && (
-            <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
-              <p className="text-error text-sm">{authError}</p>
-            </div>
-          )}
-
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <Input
-              label="Full Name"
-              type="text"
-              placeholder="John Doe"
-              icon={<FaUser />}
-              error={errors.fullName?.message}
-              disabled={isLoading}
-              {...register('fullName', {
-                required: 'Full name is required',
-                minLength: {
-                  value: 2,
-                  message: 'Name must be at least 2 characters',
-                },
-              })}
-            />
-
-            <Input
-              label="Username"
-              type="text"
-              placeholder="johndoe"
-              icon={<FaUser />}
-              error={errors.username?.message}
-              disabled={isLoading}
-              {...register('username', {
-                required: 'Username is required',
-                minLength: {
-                  value: 3,
-                  message: 'Username must be at least 3 characters',
-                },
-                pattern: {
-                  value: /^[a-zA-Z0-9_]+$/,
-                  message: 'Username can only contain letters, numbers, and underscores',
-                },
-              })}
-            />
-
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="you@example.com"
-              icon={<FaEnvelope />}
-              error={errors.email?.message}
-              disabled={isLoading}
-              {...register('email', {
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
-                },
-              })}
-            />
-
-            <div>
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Create a strong password"
-                icon={<FaLock />}
-                error={errors.password?.message}
-                disabled={isLoading}
-                {...register('password', {
-                  required: 'Password is required',
-                  minLength: {
-                    value: 6,
-                    message: 'Password must be at least 6 characters',
-                  },
-                  validate: {
-                    strength: (value) => checkPasswordStrength(value) >= 50 || 'Please use a stronger password',
-                  },
-                })}
-                onChange={(e) => {
-                  register('password').onChange(e);
-                  checkPasswordStrength(e.target.value);
-                  trigger('confirmPassword');
-                }}
+    <div className="min-h-screen bg-gradient-to-br from-app-bg via-surface to-surface">
+      {/* Desktop */}
+      <div className="hidden lg:flex min-h-screen">
+        {/* Left Column  */}
+        <div className="flex-1 flex items-center justify-center px-12 xl:px-20">
+          <div className="max-w-2xl -mt-[200px]">
+            {/* Logo  */}
+            <div className="relative w-[400px] h-[400px] mx-auto">
+              <Image
+                src="/craveologo.png"
+                alt="Craveo Logo"
+                fill
+                className="object-contain"
+                priority
               />
-              
-              {/* Password Strength Indicator */}
-              {password && (
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-text-secondary">Password strength:</span>
-                    <span className="font-medium">{getPasswordStrengthText(passwordStrength)}</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${getPasswordStrengthColor(passwordStrength)} transition-all duration-300`}
-                      style={{ width: `${Math.min(passwordStrength, 100)}%` }}
-                    />
-                  </div>
-                  <ul className="mt-2 text-xs text-text-tertiary space-y-1">
-                    <li className="flex items-center">
-                      <FaCheck className={`w-3 h-3 mr-2 ${password.length >= 8 ? 'text-success' : 'text-gray-400'}`} />
-                      At least 8 characters
-                    </li>
-                    <li className="flex items-center">
-                      <FaCheck className={`w-3 h-3 mr-2 ${/[A-Z]/.test(password) ? 'text-success' : 'text-gray-400'}`} />
-                      Uppercase letter
-                    </li>
-                    <li className="flex items-center">
-                      <FaCheck className={`w-3 h-3 mr-2 ${/[0-9]/.test(password) ? 'text-success' : 'text-gray-400'}`} />
-                      Number
-                    </li>
-                    <li className="flex items-center">
-                      <FaCheck className={`w-3 h-3 mr-2 ${/[^A-Za-z0-9]/.test(password) ? 'text-success' : 'text-gray-400'}`} />
-                      Special character
-                    </li>
-                  </ul>
+            </div>
+            
+            {/* Hero Text */}
+            <div className="space-y-8 text-left">
+              <h1 className="text-4xl xl:text-5xl font-black text-text-primary leading-tight">
+                Discover delicious foods  
+                <p className="block text-primary mt-4">and experiences</p>
+                from people around the world.
+              </h1>
+            </div>
+
+            {/* Desktop Footer */}
+            <div className="absolute bottom-8 left-12 right-12">
+              <p className="text-text-tertiary text-sm text-center">
+                © 2026 Craveo All Rights reserved.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Register Form */}
+        <div className="flex-1 flex items-center justify-center px-12 xl:px-20">
+          <div className="w-full max-w-lg">
+            <div className="bg-surface border border-border rounded-lg p-10 shadow-2xl max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="text-center mb-10">
+                <h2 className="text-4xl font-black text-text-primary leading-tight mb-4">
+                  Join Craveo
+                </h2>
+                
+                <p className="text-base font-medium text-text-secondary">
+                  Create your account and start discovering delicious foods from around the world.
+                </p>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-8 p-4 bg-error/10 border border-error/20 rounded-lg text-error text-sm">
+                  <strong>Error:</strong> {error}
                 </div>
               )}
-            </div>
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm your password"
-              icon={<FaLock />}
-              error={errors.confirmPassword?.message}
-              disabled={isLoading}
-              {...register('confirmPassword', {
-                required: 'Please confirm your password',
-                validate: (value) => value === password || 'Passwords do not match',
-              })}
-            />
+              {/* Registration Form */}
+              <form onSubmit={handleSubmit} className="space-y-6 mb-8">
+                {/* Full Name */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-text-primary">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                    placeholder="Enter your full name"
+                    required
+                    disabled={loading}
+                  />
+                </div>
 
-            <div className="space-y-4">
-              <label className="flex items-start">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-primary bg-surface border-border rounded focus:ring-primary focus:ring-2 mt-1"
-                  disabled={isLoading}
-                  {...register('agreeToTerms', {
-                    required: 'You must agree to the terms and conditions',
-                  })}
-                />
-                <span className="ml-2 text-sm text-text-secondary">
-                  I agree to the{' '}
-                  <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
-                  {' '}and{' '}
-                  <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
-                  {errors.agreeToTerms && (
-                    <span className="block text-error text-xs mt-1">{errors.agreeToTerms.message}</span>
+                {/* Username */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-text-primary">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                    placeholder="Choose a username"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-text-primary">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                    placeholder="Enter your email"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Password */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-text-primary">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                    placeholder="Create a password (min 6 characters)"
+                    required
+                    disabled={loading}
+                    minLength={6}
+                  />
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-text-primary">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                    placeholder="Confirm your password"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Date of Birth */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-text-primary">
+                    Date of Birth
+                  </label>
+                  <input
+                    type="date"
+                    name="dob"
+                    value={formData.dob}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                    required
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-text-tertiary mt-1">
+                    This will not be shown publicly. Confirm your own age.
+                  </p>
+                </div>
+
+                {/* Terms Agreement */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-start">
+                    <input
+                      type="checkbox"
+                      id="agreeToTerms"
+                      name="agreeToTerms"
+                      checked={formData.agreeToTerms}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary focus:ring-primary border-border rounded mt-1"
+                      disabled={loading}
+                      required
+                    />
+                    <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-text-secondary">
+                      I agree to the{' '}
+                      <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                      ,{' '}
+                      <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                      {' '}and{' '}
+                      <Link href="/cookies" className="text-primary hover:underline">Cookie Use</Link>.
+                    </label>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-lg transition-all text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Creating account...
+                    </>
+                  ) : (
+                    'Sign Up'
                   )}
-                </span>
-              </label>
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div className="relative mb-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="px-6 bg-surface text-text-secondary text-lg font-medium">or</span>
+                </div>
+              </div>
+
+              {/* Google Register Button */}
+              <div className="mb-8">
+                <button
+                  onClick={() => alert('Google registration would go here')}
+                  disabled={loading}
+                  className="w-full bg-white border-2 border-border hover:bg-gray-50 text-text-primary font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-4 transition-all shadow-sm"
+                >
+                  <FaGoogle className="text-green-500 text-2xl" />
+                  <span>Continue with Google</span>
+                </button>
+              </div>
+
+              {/* Sign In Link */}
+              <div className="pt-6 border-t border-border">
+                <p className="text-center text-text-secondary text-lg">
+                  Already have an account?{' '}
+                  <Link href="/auth/login" className="text-primary font-bold hover:underline">
+                    Sign In
+                  </Link>
+                </p>
+              </div>
             </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              fullWidth
-              loading={isLoading}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </Button>
-          </form>
-
-          {/* Login Link */}
-          <div className="mt-8 text-center">
-            <p className="text-text-secondary">
-              Already have an account?{' '}
-              <Link
-                href="/auth/login"
-                className="text-primary font-medium hover:text-primary-dark hover:underline"
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-
-          {/* Additional Info */}
-          <div className="mt-8 p-4 bg-surface border border-border rounded-lg">
-            <h3 className="text-sm font-medium text-text-primary mb-2">Why join Craveo?</h3>
-            <ul className="text-xs text-text-secondary space-y-1">
-              <li className="flex items-center">
-                <FaCheck className="w-3 h-3 text-success mr-2" />
-                Share your food creations with a global community
-              </li>
-              <li className="flex items-center">
-                <FaCheck className="w-3 h-3 text-success mr-2" />
-                Discover recipes and restaurants worldwide
-              </li>
-              <li className="flex items-center">
-                <FaCheck className="w-3 h-3 text-success mr-2" />
-                Connect with food enthusiasts and chefs
-              </li>
-              <li className="flex items-center">
-                <FaCheck className="w-3 h-3 text-success mr-2" />
-                Personalized food recommendations
-              </li>
-            </ul>
           </div>
         </div>
       </div>
-    </AuthRoute>
+
+      {/* Tablet Layout */}
+      <div className="hidden md:flex lg:hidden min-h-screen flex-col items-center justify-center px-8">
+        {/* Logo & Hero Section */}
+        <div className="w-full max-w-xl">
+          {/* Logo  */}
+          <div className="relative w-[300px] h-[300px] mx-auto">
+            <Image
+              src="/craveologo.png"
+              alt="Craveo Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          
+          {/* Content Container */}
+          <div className="bg-surface border border-border rounded-lg p-8 shadow-xl">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-5xl font-black text-text-primary leading-tight mb-4">
+                Join Craveo
+              </h1>
+              
+              <p className="font-medium text-text-secondary text-xl">
+                Create your account and start discovering delicious foods from around the world.
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg text-error text-sm">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
+
+            {/* Registration Form */}
+            <form onSubmit={handleSubmit} className="space-y-6 mb-8">
+              {/* Full Name */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Enter your full name"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Username */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Choose a username"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Enter your email"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Create a password (min 6 characters)"
+                  required
+                  disabled={loading}
+                  minLength={6}
+                />
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Confirm your password"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Date of Birth */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  required
+                  disabled={loading}
+                />
+                <p className="text-xs text-text-tertiary mt-1">
+                  This will not be shown publicly. Confirm your own age.
+                </p>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start">
+                  <input
+                    type="checkbox"
+                    id="agreeToTerms"
+                    name="agreeToTerms"
+                    checked={formData.agreeToTerms}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary focus:ring-primary border-border rounded mt-1"
+                    disabled={loading}
+                    required
+                  />
+                  <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-text-secondary">
+                    I agree to the{' '}
+                    <Link href="/terms" className="text-primary hover:underline">Terms</Link>
+                    ,{' '}
+                    <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                    {' '}and{' '}
+                    <Link href="/cookies" className="text-primary hover:underline">Cookie Use</Link>.
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-lg transition-all text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Creating account...
+                  </>
+                ) : (
+                  'Sign Up'
+                )}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative mb-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="px-4 bg-surface text-text-secondary font-medium">or</span>
+              </div>
+            </div>
+
+            {/* Google Register Button  */}
+            <div className="mb-8">
+              <button
+                onClick={() => alert('Google registration would go here')}
+                disabled={loading}
+                className="w-full bg-white border-2 border-border hover:bg-gray-50 text-text-primary font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-3 transition-all shadow-sm"
+              >
+                <FaGoogle className="text-green-500 text-xl" />
+                <span>Continue with Google</span>
+              </button>
+            </div>
+
+            {/* Sign In Link */}
+            <div className="pt-6 border-t border-border">
+              <p className="text-center text-text-secondary">
+                Already have an account?{' '}
+                <Link href="/auth/login" className="text-primary font-bold hover:underline">
+                  Sign In
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {/* Tablet Footer */}
+          <div className="mt-10 text-center">
+            <p className="text-text-tertiary text-sm">
+              © 2026 Craveo All Rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="md:hidden min-h-screen flex flex-col items-center justify-center px-6 py-8">
+        {/* Logo & Hero Section */}
+        <div className="w-full max-w-sm">
+          {/* Logo  */}
+          <div className="relative w-[200px] h-[200px] mx-auto">
+            <Image
+              src="/craveologo.png"
+              alt="Craveo Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          
+          {/* Content Container */}
+          <div className="bg-surface border border-border rounded-lg p-6 shadow-xl mt-4">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-4xl font-bold text-text-primary leading-tight mb-3">
+                Join Craveo
+              </h1>
+              
+              <p className="font-medium text-text-secondary text-base">
+                Create your account and start discovering delicious foods.
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg text-error text-sm">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
+
+            {/* Registration Form */}
+            <form onSubmit={handleSubmit} className="space-y-6 mb-6">
+              {/* Full Name */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Enter your full name"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Username */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Choose a username"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Enter your email"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Create a password (min 6 characters)"
+                  required
+                  disabled={loading}
+                  minLength={6}
+                />
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  placeholder="Confirm your password"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Date of Birth */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
+                  required
+                  disabled={loading}
+                />
+                <p className="text-xs text-text-tertiary mt-1">
+                  This will not be shown publicly. Confirm your own age.
+                </p>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start">
+                  <input
+                    type="checkbox"
+                    id="agreeToTerms"
+                    name="agreeToTerms"
+                    checked={formData.agreeToTerms}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary focus:ring-primary border-border rounded mt-1"
+                    disabled={loading}
+                    required
+                  />
+                  <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-text-secondary">
+                    I agree to the{' '}
+                    <Link href="/terms" className="text-primary hover:underline">Terms</Link>
+                    ,{' '}
+                    <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                    {' '}and{' '}
+                    <Link href="/cookies" className="text-primary hover:underline">Cookie Use</Link>.
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-lg transition-all text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Creating account...
+                  </>
+                ) : (
+                  'Sign Up'
+                )}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="px-4 bg-app-bg text-text-secondary font-medium">or</span>
+              </div>
+            </div>
+
+            {/* Google Register Button */}
+            <div className="mb-6">
+              <button
+                onClick={() => alert('Google registration would go here')}
+                disabled={loading}
+                className="w-full bg-white border-2 border-border hover:bg-gray-50 text-text-primary font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-3 transition-all shadow-sm"
+              >
+                <FaGoogle className="text-green-500 text-xl" />
+                <span>Continue with Google</span>
+              </button>
+            </div>
+
+            {/* Sign In Link */}
+            <div className="pt-6 border-t border-border">
+              <p className="text-center text-text-secondary">
+                Already have an account?{' '}
+                <Link href="/auth/login" className="text-primary font-bold hover:underline">
+                  Sign In
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {/* Mobile Footer */}
+          <div className="mt-6 text-center">
+            <p className="text-text-tertiary text-xs">
+              © 2026 Craveo All Rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

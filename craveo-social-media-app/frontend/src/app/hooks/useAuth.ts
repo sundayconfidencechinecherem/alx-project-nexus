@@ -13,7 +13,6 @@ export const useAuth = () => {
    * Check if user has specific role (for future role-based auth)
    */
   const hasRole = (role: string): boolean => {
-    // In real app, check user roles from token or user object
     return false; // Placeholder
   };
 
@@ -44,8 +43,7 @@ export const useAuth = () => {
     if (!auth.tokens?.accessToken) return false;
     
     try {
-      // In real app, decode token and check expiration
-      // For now, return false
+     
       return false;
     } catch {
       return false;

@@ -8,5 +8,5 @@ export interface Comment {
   isLiked: boolean;
   replies: number;
   createdAt: Date | string;
-  repliesList?: Comment[];  // Add repliesList as optional
+  repliesList?: Comment[];  
 }

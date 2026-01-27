@@ -1,6 +1,4 @@
 // GraphQL Type Definitions
-// These types should match your GraphQL schema
-// In a real project, these would be auto-generated using GraphQL Code Generator
 
 export interface User {
   id: string;

@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { FaComment, FaSort } from 'react-icons/fa';
 import CommentCard from './CommentCard';

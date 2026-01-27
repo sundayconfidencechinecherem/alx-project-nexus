@@ -1,3 +1,4 @@
+// src/app/post/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +14,11 @@ import {
   FaFire,
   FaMapMarkerAlt,
   FaPrint,
-  FaFlag
+  FaFlag,
+  FaRegHeart,
+  FaRegBookmark,
+  FaChevronLeft,
+  FaTimes
 } from 'react-icons/fa';
 import Link from 'next/link';
 import Button from '@/app/components/Button';
@@ -57,6 +62,7 @@ export default function SinglePostPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [relatedPosts, setRelatedPosts] = useState<Post[]>([]);
+  const [showImageFullscreen, setShowImageFullscreen] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -136,8 +142,8 @@ export default function SinglePostPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-app-bg py-8">
-        <div className="container mx-auto px-4">
+      <div className="min-h-screen bg-app-bg pt-16 lg:pt-0 lg:ml-64">
+        <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-8">
             {/* Back button skeleton */}
             <div className="h-8 w-24 bg-gray-300 rounded" />
@@ -162,8 +168,8 @@ export default function SinglePostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-app-bg py-8">
-        <div className="container mx-auto px-4 text-center">
+      <div className="min-h-screen bg-app-bg pt-16 lg:pt-0 lg:ml-64">
+        <div className="container mx-auto px-4 py-8 text-center">
           <h1 className="text-3xl font-bold text-text-primary mb-4">Post not found</h1>
           <p className="text-text-secondary mb-6">The post you're looking for doesn't exist.</p>
           <Button onClick={() => router.push('/')}>
@@ -175,242 +181,317 @@ export default function SinglePostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Back Button */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-app-bg">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-border p-4 flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="p-2 hover:bg-surface-hover rounded-full"
+        >
+          <FaChevronLeft className="w-5 h-5" />
+        </button>
+        <h1 className="font-bold text-text-primary">Post</h1>
+        <div className="w-10"></div> {/* Spacer */}
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden lg:block fixed top-0 left-64 right-0 z-50 bg-white border-b border-border p-4">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
           <Button
             variant="outline"
             icon={<FaArrowLeft />}
             onClick={() => router.back()}
+            className="text-sm"
           >
             Back
           </Button>
+          <h1 className="text-xl font-bold text-text-primary">Post Details</h1>
+          <div className="w-24"></div> {/* Spacer for balance */}
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Image */}
-          <div className="lg:sticky lg:top-8 lg:h-fit">
-            <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
-              <img
-                src={post.imageUrl}
-                alt={post.caption}
-                className="w-full h-auto max-h-[600px] object-cover"
-              />
-              
-              {/* Image Actions Overlay */}
-              <div className="absolute bottom-4 right-4 flex gap-2">
-                <button
-                  onClick={handleShare}
-                  className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-lg"
-                  title="Share"
-                >
-                  <FaShare />
-                </button>
-                <button
-                  onClick={() => window.print()}
-                  className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-lg"
-                  title="Print"
-                >
-                  <FaPrint />
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-4 gap-4 mt-4">
-              <div className="bg-surface rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold text-text-primary">{post.likes.toLocaleString()}</div>
-                <div className="text-sm text-text-secondary">Likes</div>
-              </div>
-              <div className="bg-surface rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold text-text-primary">{post.comments.toLocaleString()}</div>
-                <div className="text-sm text-text-secondary">Comments</div>
-              </div>
-              <div className="bg-surface rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold text-text-primary">{post.shares.toLocaleString()}</div>
-                <div className="text-sm text-text-secondary">Shares</div>
-              </div>
-              <div className="bg-surface rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold text-text-primary">{post.servings}</div>
-                <div className="text-sm text-text-secondary">Servings</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Content */}
-          <div className="space-y-8">
-            {/* Post Header */}
-            <div className="bg-surface rounded-xl shadow-lg p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Link href={`/profile/${post.user.id}`}>
-                    <img
-                      src={post.user.avatar}
-                      alt={post.user.fullName}
-                      className="w-12 h-12 rounded-full object-cover hover:opacity-90 transition-opacity cursor-pointer"
-                    />
-                  </Link>
-                  <div>
-                    <Link 
-                      href={`/profile/${post.user.id}`}
-                      className="flex items-center gap-1 hover:opacity-80"
-                    >
-                      <span className="font-bold text-text-primary">{post.user.fullName}</span>
-                      {post.user.isVerified && (
-                        <span className="text-xs px-1.5 py-0.5 bg-primary text-white rounded-full">✓</span>
-                      )}
-                    </Link>
-                    <div className="text-sm text-text-secondary">
-                      @{post.user.username}
-                    </div>
-                  </div>
-                </div>
-                <button className="p-2 text-text-tertiary hover:text-text-primary">
-                  <FaFlag />
-                </button>
-              </div>
-
-              <p className="text-text-primary whitespace-pre-line mb-6">
-                {post.caption}
-              </p>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 cursor-pointer"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-
-              {/* Food Details */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                {post.cuisine && (
-                  <div className="flex items-center gap-2">
-                    <FaUtensils className="text-primary" />
-                    <div>
-                      <div className="text-sm text-text-secondary">Cuisine</div>
-                      <div className="font-medium text-text-primary">{post.cuisine}</div>
-                    </div>
-                  </div>
-                )}
-                {post.prepTime && (
-                  <div className="flex items-center gap-2">
-                    <FaClock className="text-primary" />
-                    <div>
-                      <div className="text-sm text-text-secondary">Prep Time</div>
-                      <div className="font-medium text-text-primary">{post.prepTime}</div>
-                    </div>
-                  </div>
-                )}
-                {post.difficulty && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                      <span className="text-xs text-white">D</span>
-                    </div>
-                    <div>
-                      <div className="text-sm text-text-secondary">Difficulty</div>
-                      <div className="font-medium text-text-primary">{post.difficulty}</div>
-                    </div>
-                  </div>
-                )}
-                {post.calories && (
-                  <div className="flex items-center gap-2">
-                    <FaFire className="text-primary" />
-                    <div>
-                      <div className="text-sm text-text-secondary">Calories</div>
-                      <div className="font-medium text-text-primary">{post.calories}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Location */}
-              {post.location && (
-                <div className="flex items-center gap-2 text-text-secondary mb-6">
-                  <FaMapMarkerAlt />
-                  <span>{post.location}</span>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex items-center justify-between pt-6 border-t border-border">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={handleLike}
-                    className={`flex items-center gap-2 ${isLiked ? 'text-red-500' : 'text-text-secondary hover:text-text-primary'}`}
-                  >
-                    <FaHeart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
-                    <span className="font-medium">Like</span>
-                  </button>
-                  <button className="flex items-center gap-2 text-text-secondary hover:text-text-primary">
-                    <FaComment className="w-6 h-6" />
-                    <span className="font-medium">Comment</span>
-                  </button>
+      {/* Content with proper navbar spacing */}
+      <div className="pt-16 lg:pt-20 lg:ml-64">
+        <div className="container mx-auto px-4 py-4 lg:py-8 max-w-6xl">
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            {/* Left Column - Image */}
+            <div className="lg:sticky lg:top-24 lg:h-fit">
+              {/* Image Container */}
+              <div className="bg-surface rounded-xl shadow-lg overflow-hidden relative">
+                <img
+                  src={post.imageUrl}
+                  alt={post.caption}
+                  className="w-full h-auto max-h-[500px] lg:max-h-[600px] object-cover cursor-pointer"
+                  onClick={() => setShowImageFullscreen(true)}
+                />
+                
+                {/* Image Actions Overlay */}
+                <div className="absolute bottom-4 right-4 flex gap-2">
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 text-text-secondary hover:text-text-primary"
+                    className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-lg"
+                    title="Share"
                   >
-                    <FaShare className="w-6 h-6" />
-                    <span className="font-medium">Share</span>
+                    <FaShare className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => window.print()}
+                    className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-lg"
+                    title="Print"
+                  >
+                    <FaPrint className="w-4 h-4" />
                   </button>
                 </div>
-                <button
-                  onClick={handleSave}
-                  className={`${isSaved ? 'text-yellow-500' : 'text-text-secondary hover:text-text-primary'}`}
-                >
-                  <FaBookmark className="w-6 h-6" />
-                </button>
+              </div>
+
+              {/* Quick Stats - Mobile */}
+              <div className="lg:hidden grid grid-cols-4 gap-3 mt-4">
+                <div className="bg-surface rounded-xl p-3 text-center">
+                  <div className="text-lg font-bold text-text-primary">{post.likes > 999 ? `${(post.likes/1000).toFixed(1)}k` : post.likes}</div>
+                  <div className="text-xs text-text-secondary">Likes</div>
+                </div>
+                <div className="bg-surface rounded-xl p-3 text-center">
+                  <div className="text-lg font-bold text-text-primary">{post.comments > 999 ? `${(post.comments/1000).toFixed(1)}k` : post.comments}</div>
+                  <div className="text-xs text-text-secondary">Comments</div>
+                </div>
+                <div className="bg-surface rounded-xl p-3 text-center">
+                  <div className="text-lg font-bold text-text-primary">{post.shares > 999 ? `${(post.shares/1000).toFixed(1)}k` : post.shares}</div>
+                  <div className="text-xs text-text-secondary">Shares</div>
+                </div>
+                <div className="bg-surface rounded-xl p-3 text-center">
+                  <div className="text-lg font-bold text-text-primary">{post.servings}</div>
+                  <div className="text-xs text-text-secondary">Servings</div>
+                </div>
+              </div>
+
+              {/* Quick Stats - Desktop */}
+              <div className="hidden lg:grid grid-cols-4 gap-4 mt-6">
+                <div className="bg-surface rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-text-primary">{post.likes.toLocaleString()}</div>
+                  <div className="text-sm text-text-secondary">Likes</div>
+                </div>
+                <div className="bg-surface rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-text-primary">{post.comments.toLocaleString()}</div>
+                  <div className="text-sm text-text-secondary">Comments</div>
+                </div>
+                <div className="bg-surface rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-text-primary">{post.shares.toLocaleString()}</div>
+                  <div className="text-sm text-text-secondary">Shares</div>
+                </div>
+                <div className="bg-surface rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-text-primary">{post.servings}</div>
+                  <div className="text-sm text-text-secondary">Servings</div>
+                </div>
               </div>
             </div>
 
-            {/* Comments Section */}
-            <CommentsSection
-              comments={comments}
-              postId={postId}
-              onAddComment={handleAddComment}
-            />
-
-            {/* Related Posts */}
-            {relatedPosts.length > 0 && (
-              <div className="bg-surface rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-text-primary mb-6">
-                  Related Posts
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {relatedPosts.map((relatedPost) => (
-                    <div
-                      key={relatedPost.id}
-                      className="bg-surface-hover rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/post/${relatedPost.id}`)}
-                    >
+            {/* Right Column - Content */}
+            <div className="space-y-6 lg:space-y-8">
+              {/* Post Header */}
+              <div className="bg-surface rounded-xl shadow-lg p-4 lg:p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <Link href={`/profile/${post.user.id}`}>
                       <img
-                        src={relatedPost.imageUrl}
-                        alt={relatedPost.caption}
-                        className="w-full h-40 object-cover"
+                        src={post.user.avatar}
+                        alt={post.user.fullName}
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover hover:opacity-90 transition-opacity cursor-pointer"
                       />
-                      <div className="p-4">
-                        <p className="text-text-primary line-clamp-2 text-sm mb-2">
-                          {relatedPost.caption}
-                        </p>
-                        <div className="flex items-center justify-between text-xs text-text-secondary">
-                          <span>{relatedPost.cuisine}</span>
-                          <span>{relatedPost.likes.toLocaleString()} likes</span>
-                        </div>
+                    </Link>
+                    <div>
+                      <Link 
+                        href={`/profile/${post.user.id}`}
+                        className="flex items-center gap-1 hover:opacity-80"
+                      >
+                        <span className="font-bold text-text-primary text-sm lg:text-base">{post.user.fullName}</span>
+                        {post.user.isVerified && (
+                          <span className="text-xs px-1.5 py-0.5 bg-primary text-white rounded-full">✓</span>
+                        )}
+                      </Link>
+                      <div className="text-xs lg:text-sm text-text-secondary">
+                        @{post.user.username}
                       </div>
                     </div>
+                  </div>
+                  <button className="p-2 text-text-tertiary hover:text-text-primary">
+                    <FaFlag className="w-4 h-4 lg:w-5 lg:h-5" />
+                  </button>
+                </div>
+
+                <p className="text-text-primary whitespace-pre-line mb-4 lg:mb-6 text-sm lg:text-base">
+                  {post.caption}
+                </p>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2 mb-4 lg:mb-6">
+                  {post.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 lg:px-3 py-1 lg:py-1.5 bg-primary/10 text-primary rounded-full text-xs lg:text-sm hover:bg-primary/20 cursor-pointer"
+                    >
+                      #{tag}
+                    </span>
                   ))}
                 </div>
+
+                {/* Food Details */}
+                <div className="grid grid-cols-2 gap-3 lg:gap-4 mb-4 lg:mb-6">
+                  {post.cuisine && (
+                    <div className="flex items-center gap-2">
+                      <FaUtensils className="text-primary w-3 h-3 lg:w-4 lg:h-4" />
+                      <div>
+                        <div className="text-xs lg:text-sm text-text-secondary">Cuisine</div>
+                        <div className="font-medium text-text-primary text-sm lg:text-base">{post.cuisine}</div>
+                      </div>
+                    </div>
+                  )}
+                  {post.prepTime && (
+                    <div className="flex items-center gap-2">
+                      <FaClock className="text-primary w-3 h-3 lg:w-4 lg:h-4" />
+                      <div>
+                        <div className="text-xs lg:text-sm text-text-secondary">Prep Time</div>
+                        <div className="font-medium text-text-primary text-sm lg:text-base">{post.prepTime}</div>
+                      </div>
+                    </div>
+                  )}
+                  {post.difficulty && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 lg:w-4 lg:h-4 rounded-full bg-primary flex items-center justify-center">
+                        <span className="text-xs text-white">D</span>
+                      </div>
+                      <div>
+                        <div className="text-xs lg:text-sm text-text-secondary">Difficulty</div>
+                        <div className="font-medium text-text-primary text-sm lg:text-base">{post.difficulty}</div>
+                      </div>
+                    </div>
+                  )}
+                  {post.calories && (
+                    <div className="flex items-center gap-2">
+                      <FaFire className="text-primary w-3 h-3 lg:w-4 lg:h-4" />
+                      <div>
+                        <div className="text-xs lg:text-sm text-text-secondary">Calories</div>
+                        <div className="font-medium text-text-primary text-sm lg:text-base">{post.calories}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Location */}
+                {post.location && (
+                  <div className="flex items-center gap-2 text-text-secondary mb-4 lg:mb-6 text-sm">
+                    <FaMapMarkerAlt className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <span>{post.location}</span>
+                  </div>
+                )}
+
+                {/* Actions - Mobile */}
+                <div className="lg:hidden flex items-center justify-between pt-4 border-t border-border">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={handleLike}
+                      className={`flex flex-col items-center gap-1 ${isLiked ? 'text-red-500' : 'text-text-secondary hover:text-red-500'}`}
+                    >
+                      {isLiked ? (
+                        <FaHeart className="w-6 h-6 fill-current" />
+                      ) : (
+                        <FaRegHeart className="w-6 h-6" />
+                      )}
+                      <span className="text-xs">Like</span>
+                    </button>
+                    <button className="flex flex-col items-center gap-1 text-text-secondary hover:text-blue-500">
+                      <FaComment className="w-6 h-6" />
+                      <span className="text-xs">Comment</span>
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      className="flex flex-col items-center gap-1 text-text-secondary hover:text-green-500"
+                    >
+                      <FaShare className="w-6 h-6" />
+                      <span className="text-xs">Share</span>
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleSave}
+                    className={`flex flex-col items-center gap-1 ${isSaved ? 'text-yellow-500' : 'text-text-secondary hover:text-yellow-500'}`}
+                  >
+                    {isSaved ? (
+                      <FaBookmark className="w-6 h-6 fill-current" />
+                    ) : (
+                      <FaRegBookmark className="w-6 h-6" />
+                    )}
+                    <span className="text-xs">Save</span>
+                  </button>
+                </div>
+
+                {/* Actions - Desktop */}
+                <div className="hidden lg:flex items-center justify-between pt-6 border-t border-border">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={handleLike}
+                      className={`flex items-center gap-2 ${isLiked ? 'text-red-500' : 'text-text-secondary hover:text-text-primary'}`}
+                    >
+                      {isLiked ? (
+                        <FaHeart className="w-6 h-6 fill-current" />
+                      ) : (
+                        <FaRegHeart className="w-6 h-6" />
+                      )}
+                      <span className="font-medium">Like</span>
+                    </button>
+                    <button className="flex items-center gap-2 text-text-secondary hover:text-text-primary">
+                      <FaComment className="w-6 h-6" />
+                      <span className="font-medium">Comment</span>
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      className="flex items-center gap-2 text-text-secondary hover:text-text-primary"
+                    >
+                      <FaShare className="w-6 h-6" />
+                      <span className="font-medium">Share</span>
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleSave}
+                    className={`${isSaved ? 'text-yellow-500' : 'text-text-secondary hover:text-text-primary'}`}
+                  >
+                    {isSaved ? (
+                      <FaBookmark className="w-6 h-6 fill-current" />
+                    ) : (
+                      <FaRegBookmark className="w-6 h-6" />
+                    )}
+                  </button>
+                </div>
               </div>
-            )}
+
+              {/* Comments Section */}
+              <CommentsSection
+                comments={comments}
+                postId={postId}
+                onAddComment={handleAddComment}
+              />
+
+            
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Image Modal */}
+      {showImageFullscreen && (
+        <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+          <button
+            onClick={() => setShowImageFullscreen(false)}
+            className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-full"
+          >
+            <FaTimes className="w-6 h-6" />
+          </button>
+          <img
+            src={post.imageUrl}
+            alt={post.caption}
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }

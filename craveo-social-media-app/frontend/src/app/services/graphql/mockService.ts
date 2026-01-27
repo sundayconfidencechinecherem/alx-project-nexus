@@ -1,5 +1,5 @@
 /**
- * Mock GraphQL Service with proper typing
+ * Mock GraphQL Service 
  */
 
 import { Post, User, Comment, PaginatedPosts, PaginatedComments } from './types';

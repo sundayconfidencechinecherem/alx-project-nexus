@@ -13,6 +13,7 @@ interface AuthRouteProps {
  * Redirects authenticated users away from auth pages (login/register)
  * This is the opposite of ProtectedRoute
  */
+
 export function AuthRoute({ children }: AuthRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();

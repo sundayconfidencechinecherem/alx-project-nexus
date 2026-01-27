@@ -1,6 +1,8 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 import { FaSpinner } from 'react-icons/fa';
 
+//buttons
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'danger';

@@ -1,5 +1,4 @@
 'use client';
-
 import { FaHeart, FaReply } from 'react-icons/fa';
 import { useState } from 'react';
 import Link from 'next/link';

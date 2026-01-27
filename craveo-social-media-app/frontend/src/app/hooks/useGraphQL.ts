@@ -8,12 +8,12 @@ import { mockGraphQL } from '../services/graphql/mockService';
 type OperationVariables = Record<string, any>;
 
 /**
- * Universal GraphQL hook that works with both real and mock data
+ * Universal GraphQL hook 
  */
 export const useGraphQL = () => {
   const useMock = isUsingMockData();
 
-  // For mock data, create simple hooks
+  // For mock data,
   if (useMock) {
     return {
       // Mock queries
@@ -252,7 +252,6 @@ export const useGraphQL = () => {
   }
 
   // If not using mock data, return empty hooks for now
-  // You'll need to implement these with real GraphQL operations
   return {
     // Queries
     useFeedPosts: () => ({ 
