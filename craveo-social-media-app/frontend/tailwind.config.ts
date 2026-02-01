@@ -16,6 +16,7 @@ const config: Config = {
           hover: '#158518',
           light: '#E8F5E9',
           dark: '#0D6A11',
+          
         },
         
         // Background Colors

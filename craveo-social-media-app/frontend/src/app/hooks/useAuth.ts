@@ -1,10 +1,11 @@
+// app/hooks/useAuth.ts - COMPLETE VERSION
 'use client';
 
 import { useAuth as useAuthContext } from '../context/AuthContext';
+import { User } from '../graphql/types';
 
 /**
- * Custom hook for authentication
- * Provides authentication state and methods
+ * Custom hook for authentication with extended functionality
  */
 export const useAuth = () => {
   const auth = useAuthContext();
@@ -13,7 +14,7 @@ export const useAuth = () => {
    * Check if user has specific role (for future role-based auth)
    */
   const hasRole = (role: string): boolean => {
-    return false; // Placeholder
+    return false; // Placeholder for future role-based auth
   };
 
   /**
@@ -37,20 +38,6 @@ export const useAuth = () => {
   };
 
   /**
-   * Check if token is about to expire (for automatic refresh)
-   */
-  const isTokenExpiringSoon = (): boolean => {
-    if (!auth.tokens?.accessToken) return false;
-    
-    try {
-     
-      return false;
-    } catch {
-      return false;
-    }
-  };
-
-  /**
    * Get user display name (full name or username)
    */
   const getDisplayName = (): string => {
@@ -64,20 +51,42 @@ export const useAuth = () => {
     return auth.user?.isVerified || false;
   };
 
+  /**
+   * Check if user can post (basic validation)
+   */
+  const canPost = (): boolean => {
+    return auth.isAuthenticated && (auth.user?.isVerified || false);
+  };
+
+  /**
+   * Get auth debug info
+   */
+  const getDebugInfo = () => {
+    return {
+      user: auth.user,
+      isAuthenticated: auth.isAuthenticated,
+      isLoading: auth.isLoading,
+      cookies: typeof document !== 'undefined' ? document.cookie : 'No document',
+      localStorage: typeof window !== 'undefined' 
+        ? { user: localStorage.getItem('user') }
+        : 'No window'
+    };
+  };
+
   return {
     ...auth,
     hasRole,
     isOwner,
     getUserInitials,
-    isTokenExpiringSoon,
     getDisplayName,
     isVerified,
+    canPost,
+    getDebugInfo,
   };
 };
 
 /**
- * Hook for checking authentication status
- * Useful for components that need to know if user is logged in
+ * Hook for checking authentication status only
  */
 export const useAuthStatus = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -85,10 +94,10 @@ export const useAuthStatus = () => {
 };
 
 /**
- * Hook for getting current user
- * Returns null if no user is logged in
+ * Hook for getting current user only
  */
 export const useCurrentUser = () => {
   const { user } = useAuth();
   return user;
 };
+

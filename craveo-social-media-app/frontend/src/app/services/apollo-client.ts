@@ -1,176 +1,85 @@
+// app/services/apollo-client.ts
 import { 
   ApolloClient, 
   InMemoryCache, 
   createHttpLink,
   ApolloLink,
-  Observable,
-  Operation
+  from
 } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
+import { onError } from '@apollo/client/link/error';
+import { gql } from '@apollo/client';
 
-// Import your mock data service
-import { mockGraphQL } from './graphql/mockService';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+const GRAPHQL_ENDPOINT = `${BACKEND_URL}/graphql`;
 
-// Check if we should use mock data
-const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || 
-                      process.env.NODE_ENV === 'development';
-
-// Create mock Apollo Link for development
-const createMockLink = (): ApolloLink => {
-  return new ApolloLink((operation: Operation) => {
-    const { operationName, variables } = operation;
-
-    return new Observable((observer) => {
-      (async () => {
-        try {
-          
-          let result: any;
-          const operationType = operationName?.includes('Mutation') ? 'mutations' : 'queries';
-
-          // Handle different operations
-          if (operationType === 'queries') {
-            switch (operationName) {
-              case 'GetCurrentUser':
-                result = { currentUser: await mockGraphQL.queries.getCurrentUser() };
-                break;
-              case 'GetFeedPosts':
-                result = { 
-                  feedPosts: await mockGraphQL.queries.getFeedPosts(
-                    variables?.page || 1, 
-                    variables?.limit || 10
-                  ) 
-                };
-                break;
-              case 'GetPostDetails':
-                result = { 
-                  post: await mockGraphQL.queries.getPostDetails(variables?.postId)
-                };
-                break;
-              case 'GetUserProfile':
-                result = { 
-                  user: await mockGraphQL.queries.getUserProfile(variables?.userId)
-                };
-                break;
-              case 'GetPostComments':
-                result = { 
-                  comments: await mockGraphQL.queries.getPostComments(
-                    variables?.postId,
-                    variables?.page || 1,
-                    variables?.limit || 10
-                  ) 
-                };
-                break;
-              default:
-                result = { data: null };
-            }
-          } else {
-            // Handle mutations
-            switch (operationName) {
-              case 'LikePost':
-                result = { 
-                  likePost: await mockGraphQL.mutations.likePost(variables?.postId)
-                };
-                break;
-              case 'SavePost':
-                result = { 
-                  savePost: await mockGraphQL.mutations.savePost(variables?.postId)
-                };
-                break;
-              case 'CreateComment':
-                result = { 
-                  createComment: await mockGraphQL.mutations.createComment(
-                    variables?.postId, 
-                    variables?.content
-                  )
-                };
-                break;
-              case 'FollowUser':
-                result = { 
-                  followUser: await mockGraphQL.mutations.followUser(variables?.userId)
-                };
-                break;
-              case 'CreatePost':
-                // Mock post creation
-                result = { 
-                  createPost: {
-                    id: `post-${Date.now()}`,
-                    ...variables,
-                    likes: 0,
-                    comments: 0,
-                    isLiked: false,
-                    isSaved: false,
-                    createdAt: new Date().toISOString(),
-                    user: await mockGraphQL.queries.getCurrentUser()
-                  }
-                };
-                break;
-              default:
-                result = { success: true };
-            }
-          }
-
-          // Simulate network delay
-          await new Promise(resolve => setTimeout(resolve, 300));
-
-          observer.next({
-            data: result,
-          });
-          observer.complete();
-        } catch (error: any) {
-          observer.error(error);
-        }
-      })();
+// ====== ERROR HANDLING LINK ======
+const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach((error) => {
+      console.error('[GraphQL Error]:', {
+        message: error.message,
+        operation: operation.operationName,
+        path: error.path
+      });
     });
-  });
-};
+  }
+  
+  if (networkError) {
+    console.error('[Network Error]:', networkError.message);
+  }
+});
 
-// Create HTTP link for real GraphQL API
+// ====== AUTH LINK TO ADD TOKEN TO HEADERS ======
+const authLink = setContext((_, { headers }) => {
+  if (typeof window === 'undefined') {
+    return { headers };
+  }
+  
+  let token: string | null = null;
+  const userStr = localStorage.getItem('user');
+  
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      token = user.token || localStorage.getItem('token');
+    } catch (error) {
+      console.error('Error parsing user from localStorage:', error);
+    }
+  }
+  
+  return {
+    headers: {
+      ...headers,
+      ...(token ? { 
+        Authorization: `Bearer ${token}` 
+      } : {}),
+    }
+  };
+});
+
+// ====== HTTP LINK ======
 const httpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'https://mock-graphql.craveo.app/graphql',
+  uri: GRAPHQL_ENDPOINT,
   credentials: 'include',
 });
 
-// error handling using ApolloLink
-const errorLink = new ApolloLink((operation, forward) => {
-  return new Observable((observer) => {
-    const subscription = forward(operation).subscribe({
-      next: (response) => {
-        if (response.errors) {
-          console.error('[GraphQL errors]:', response.errors);
-        }
-        observer.next(response);
-      },
-      error: (error) => {
-        console.error('[Network error]:', error);
-        observer.error(error);
-      },
-      complete: () => observer.complete(),
-    });
+// ====== COMBINE LINKS ======
+const link = from([errorLink, authLink, httpLink]);
 
-    return () => subscription.unsubscribe();
-  });
-});
-
-// Decide which link to use ?
-const link = USE_MOCK_DATA
-  ? ApolloLink.from([errorLink, createMockLink()])
-  : ApolloLink.from([errorLink, httpLink]);
-
-// Configure cache
+// ====== CACHE CONFIGURATION ======
 const cache = new InMemoryCache({
   typePolicies: {
     Query: {
       fields: {
-        feedPosts: {
-          keyArgs: false,
-          merge(existing: any, incoming: any) {
-            if (!incoming) return existing;
-            if (!existing) return incoming;
-            
-            // Merge paginated posts
-            return {
-              ...incoming,
-              posts: [...existing.posts, ...incoming.posts],
-            };
+        getSavedPosts: {
+          merge(existing = [], incoming: any[]) {
+            return incoming;
+          },
+        },
+        getFeed: {
+          merge(existing = [], incoming: any[]) {
+            return incoming;
           },
         },
       },
@@ -178,14 +87,14 @@ const cache = new InMemoryCache({
   },
 });
 
-// Create Apollo Client
+// ====== CREATE APOLLO CLIENT ======
 export const apolloClient = new ApolloClient({
   link,
   cache,
   defaultOptions: {
     watchQuery: {
       fetchPolicy: 'cache-and-network',
-      nextFetchPolicy: 'cache-first',
+      errorPolicy: 'ignore',
     },
     query: {
       fetchPolicy: 'network-only',
@@ -197,10 +106,51 @@ export const apolloClient = new ApolloClient({
   },
 });
 
-// Helper to reset cache (useful for logout)
-export const resetApolloCache = () => {
-  apolloClient.resetStore();
+// ====== HELPER FUNCTIONS ======
+export const setAuthData = (user: any, token?: string, refreshToken?: string) => {
+  if (typeof window !== 'undefined') {
+    const userWithTokens = {
+      ...user,
+      token: token || user.token,
+      refreshToken: refreshToken || user.refreshToken
+    };
+    
+    localStorage.setItem('user', JSON.stringify(userWithTokens));
+    if (token) localStorage.setItem('token', token);
+    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+    
+    apolloClient.resetStore();
+  }
 };
 
-// Helper to check if we're using mock data
-export const isUsingMockData = () => USE_MOCK_DATA;
+export const clearAuthData = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+  }
+  apolloClient.clearStore();
+};
+
+export const getCurrentUser = (): any => {
+  if (typeof window !== 'undefined') {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (error) {
+        console.error('Error parsing user:', error);
+        return null;
+      }
+    }
+  }
+  return null;
+};
+
+export const getToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  const user = getCurrentUser();
+  return user?.token || localStorage.getItem('token');
+};
+
+export default apolloClient;

@@ -2,10 +2,10 @@
 import { FaHeart, FaReply } from 'react-icons/fa';
 import { useState } from 'react';
 import Link from 'next/link';
-import { Comment } from '../types/comment';
+import { CommentWithUI, convertCommentForUI } from '@/app/graphql/types';
 
 interface CommentCardProps {
-  comment: Comment;
+  comment: CommentWithUI;
   isReply?: boolean;
 }
 
@@ -13,8 +13,8 @@ export default function CommentCard({
   comment,
   isReply = false,
 }: CommentCardProps) {
-  const [isLiked, setIsLiked] = useState(comment.isLiked);
-  const [likes, setLikes] = useState(comment.likes);
+  const [isLiked, setIsLiked] = useState(comment.isLiked || false);
+  const [likes, setLikes] = useState(comment.likes || 0);
 
   const handleLike = () => {
     const newLikedState = !isLiked;
@@ -22,8 +22,8 @@ export default function CommentCard({
     setLikes(newLikedState ? likes + 1 : likes - 1);
   };
 
-  const formatDate = (dateInput: Date | string) => {
-    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
@@ -46,11 +46,11 @@ export default function CommentCard({
     <div className={`${isReply ? 'ml-12' : ''}`}>
       <div className="flex gap-3">
         {/* Avatar */}
-        <Link href={`/profile/${comment.user.id}`}>
+        <Link href={`/profile/${comment.author.id}`}>
           <div className="flex-shrink-0">
             <img
-              src={comment.user.avatar}
-              alt={comment.user.fullName}
+              src={comment.author.avatar || '/images/avatars/default.png'}
+              alt={comment.author.fullName}
               className="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity cursor-pointer"
             />
           </div>
@@ -62,16 +62,16 @@ export default function CommentCard({
             {/* Comment Header */}
             <div className="flex items-center gap-2 mb-2">
               <Link 
-                href={`/profile/${comment.user.id}`}
+                href={`/profile/${comment.author.id}`}
                 className="font-semibold text-text-primary hover:opacity-80"
               >
-                {comment.user.fullName}
+                {comment.author.fullName}
               </Link>
-              {comment.user.isVerified && (
+              {comment.author.isVerified && (
                 <span className="text-xs px-1.5 py-0.5 bg-primary text-white rounded-full">✓</span>
               )}
               <span className="text-sm text-text-secondary">
-                @{comment.user.username}
+                @{comment.author.username}
               </span>
               <span className="text-xs text-text-tertiary">
                 {formatDate(comment.createdAt)}
@@ -99,12 +99,13 @@ export default function CommentCard({
               <span>Reply</span>
             </button>
 
-            {comment.replies > 0 && (
+            {comment.replies && comment.replies > 0 && (
               <button className="text-sm text-primary hover:text-primary-dark">
                 View {comment.replies} {comment.replies === 1 ? 'reply' : 'replies'}
               </button>
             )}
           </div>
+          
         </div>
       </div>
     </div>

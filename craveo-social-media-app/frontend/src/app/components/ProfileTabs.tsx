@@ -1,57 +1,50 @@
+// src/app/components/ProfileTabs.tsx - CREATE THIS
 'use client';
 
-import { useState } from 'react';
-import { FaImages, FaHeart, FaBookmark, FaUtensils } from 'react-icons/fa';
-
-type TabType = 'posts' | 'liked' | 'saved' | 'recipes';
+import { FaThLarge, FaList, FaHeart, FaBookmark } from 'react-icons/fa';
 
 interface ProfileTabsProps {
-  activeTab: TabType;
-  onTabChange: (tab: TabType) => void;
+  activeTab: 'posts' | 'recipes' | 'liked' | 'saved';
+  onTabChange: (tab: 'posts' | 'recipes' | 'liked' | 'saved') => void;
   counts: {
     posts: number;
+    recipes: number;
     liked: number;
     saved: number;
-    recipes: number;
   };
 }
 
-export default function ProfileTabs({
-  activeTab,
-  onTabChange,
-  counts,
-}: ProfileTabsProps) {
-  const tabs: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
-    { id: 'posts', label: 'Posts', icon: <FaImages /> },
-    { id: 'liked', label: 'Liked', icon: <FaHeart /> },
-    { id: 'saved', label: 'Saved', icon: <FaBookmark /> },
-    { id: 'recipes', label: 'Recipes', icon: <FaUtensils /> },
+export default function ProfileTabs({ activeTab, onTabChange, counts }: ProfileTabsProps) {
+  const tabs = [
+    { id: 'posts' as const, label: 'Posts', icon: <FaThLarge />, count: counts.posts },
+    { id: 'recipes' as const, label: 'Recipes', icon: <FaList />, count: counts.recipes },
+    { id: 'liked' as const, label: 'Liked', icon: <FaHeart />, count: counts.liked },
+    { id: 'saved' as const, label: 'Saved', icon: <FaBookmark />, count: counts.saved },
   ];
 
   return (
     <div className="border-b border-border">
-      <div className="flex space-x-1">
+      <div className="flex overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`
-              flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors relative
-              ${activeTab === tab.id
-                ? 'text-primary'
-                : 'text-text-secondary hover:text-text-primary'
-              }
-            `}
+            className={`flex items-center gap-2 px-6 py-4 font-medium whitespace-nowrap transition-colors ${
+              activeTab === tab.id
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
+            }`}
           >
             {tab.icon}
             <span>{tab.label}</span>
-            <span className="ml-1 px-2 py-0.5 bg-surface-hover rounded-full text-xs">
-              {counts[tab.id]}
-            </span>
-            
-            {/* Active indicator */}
-            {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+            {tab.count > 0 && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                activeTab === tab.id 
+                  ? 'bg-primary/20 text-primary' 
+                  : 'bg-surface-hover text-text-secondary'
+              }`}>
+                {tab.count}
+              </span>
             )}
           </button>
         ))}
