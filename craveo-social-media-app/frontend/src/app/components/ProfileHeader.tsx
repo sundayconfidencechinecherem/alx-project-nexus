@@ -1,229 +1,190 @@
+// src/app/components/ProfileHeader.tsx
 'use client';
 
-import { FaCamera, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
-import Button from './Button';
 import { useState } from 'react';
-
-interface UserProfile {
-  id: string;
-  username: string;
-  fullName: string;
-  bio: string;
-  avatar: string;
-  followers: number;
-  following: number;
-  posts: number;
-  isVerified: boolean;
-  isFollowing: boolean;
-  isOwnProfile: boolean;
-}
+import { useFollowUser, useCurrentUser } from '@/app/hooks/useGraphQL';
+import { FaCamera, FaEdit, FaUserPlus, FaUserCheck, FaGlobe, FaMapMarkerAlt, FaLink } from 'react-icons/fa';
+import Link from 'next/link';
 
 interface ProfileHeaderProps {
-  user: UserProfile;
-  onFollow?: () => void;
+  user: {
+    id: string;
+    username: string;
+    fullName: string;
+    bio?: string;
+    avatar?: string;
+    coverPhoto?: string;
+    followers?: number;
+    following?: number;
+    posts?: number;
+    isVerified?: boolean;
+    location?: string;
+    website?: string;
+    isFollowing?: boolean;
+    isOwnProfile?: boolean;
+  };
   onEditProfile?: () => void;
-  onAvatarChange?: (file: File) => void;
 }
 
-export default function ProfileHeader({
-  user,
-  onFollow,
-  onEditProfile,
-  onAvatarChange,
-}: ProfileHeaderProps) {
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bioText, setBioText] = useState(user.bio);
-  const [isUploading, setIsUploading] = useState(false);
+export default function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
+  const { user: currentUser } = useCurrentUser();
+  const { followUser, loading: followLoading } = useFollowUser();
+  const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
+  const [followerCount, setFollowerCount] = useState(user.followers || 0);
 
-  const handleFollowClick = () => {
-    if (onFollow) onFollow();
-  };
-
-  const handleEditClick = () => {
-    if (onEditProfile) onEditProfile();
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && onAvatarChange) {
-      setIsUploading(true);
-      onAvatarChange(file);
-      
-      setTimeout(() => setIsUploading(false), 1000);
+  const handleFollow = async () => {
+    if (followLoading || !currentUser) return;
+    
+    try {
+      await followUser(user.id); // FIXED: Pass string instead of object
+      setIsFollowing(!isFollowing);
+      setFollowerCount(prev => isFollowing ? Math.max(0, prev - 1) : prev + 1);
+    } catch (error) {
+      console.error('Failed to follow user:', error);
     }
-  };
-
-  const handleSaveBio = () => {
-
-    setIsEditingBio(false);
-  };
-
-  const handleCancelBio = () => {
-    setBioText(user.bio);
-    setIsEditingBio(false);
   };
 
   return (
     <div className="bg-surface rounded-xl shadow-lg overflow-hidden">
       {/* Cover Photo */}
-      <div className="h-48 bg-gradient-to-r from-primary to-secondary relative">
+      <div className="relative h-48 md:h-64 bg-gradient-to-r from-primary/20 to-secondary/20">
+        {user.coverPhoto && (
+          <img
+            src={user.coverPhoto}
+            alt="Cover"
+            className="w-full h-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        
         {user.isOwnProfile && (
-          <div className="absolute top-4 right-4">
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-              <div className="px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg flex items-center gap-2 text-text-primary hover:bg-white transition-colors">
-                <FaCamera />
-                <span>Change Cover</span>
-              </div>
-            </label>
-          </div>
+          <button
+            onClick={onEditProfile}
+            className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-primary px-4 py-2 rounded-lg hover:bg-white transition-colors flex items-center gap-2 z-10"
+          >
+            <FaEdit /> Edit Profile
+          </button>
         )}
       </div>
 
       {/* Profile Info */}
-      <div className="px-8 pb-8 -mt-16 relative">
-        {/* Avatar */}
-        <div className="relative">
-          <div className="w-40 h-40 rounded-full border-4 border-surface overflow-hidden bg-surface-hover">
-            <img
-              src={user.avatar}
-              alt={user.username}
-              className="w-full h-full object-cover"
-            />
-            {isUploading && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-          </div>
-          
-          {user.isOwnProfile && (
-            <label className="absolute bottom-4 right-4 cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-              <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors shadow-lg">
-                <FaCamera className="w-5 h-5" />
-              </div>
-            </label>
-          )}
-        </div>
-
-        {/* User Info */}
-        <div className="mt-6">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-text-primary">
-              {user.fullName}
-            </h1>
-            {user.isVerified && (
-              <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold">✓</span>
-              </div>
-            )}
-          </div>
-          
-          <p className="text-text-secondary text-lg">@{user.username}</p>
-          
-          {/* Bio */}
-          <div className="mt-6">
-            {isEditingBio ? (
-              <div className="space-y-3">
-                <textarea
-                  value={bioText}
-                  onChange={(e) => setBioText(e.target.value)}
-                  className="w-full px-4 py-3 bg-surface-hover border border-border rounded-lg text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                  rows={3}
-                  maxLength={160}
+      <div className="px-6 md:px-8 pb-6 -mt-16">
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between">
+          <div className="flex items-end gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white bg-white overflow-hidden shadow-lg">
+                <img
+                  src={user.avatar || '/images/avatars/default.png'}
+                  alt={user.fullName}
+                  className="w-full h-full object-cover"
                 />
-                <div className="flex gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={<FaCheck />}
-                    onClick={handleSaveBio}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    icon={<FaTimes />}
-                    onClick={handleCancelBio}
-                  >
-                    Cancel
-                  </Button>
-                  <div className="flex-1 text-right text-sm text-text-tertiary">
-                    {bioText.length}/160
-                  </div>
-                </div>
               </div>
-            ) : (
-              <div className="group">
-                <p className="text-text-primary whitespace-pre-line">
-                  {user.bio || 'No bio yet'}
-                </p>
-                {user.isOwnProfile && (
-                  <button
-                    onClick={() => setIsEditingBio(true)}
-                    className="mt-2 text-primary hover:text-primary-dark text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    Edit bio
-                  </button>
+              {user.isOwnProfile && (
+                <button className="absolute bottom-2 right-2 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors shadow-lg">
+                  <FaCamera className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* User Info */}
+            <div className="mb-4">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-text-primary">
+                  {user.fullName}
+                </h1>
+                {user.isVerified && (
+                  <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
+                    ✓ Verified
+                  </span>
                 )}
               </div>
-            )}
-          </div>
+              <p className="text-text-secondary mb-2">@{user.username}</p>
+              
+              {user.bio && (
+                <p className="text-text-primary max-w-2xl mb-4">{user.bio}</p>
+              )}
 
-          {/* Stats */}
-          <div className="flex gap-8 mt-8">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-text-primary">
-                {user.posts.toLocaleString()}
+              {/* Additional Info */}
+              <div className="flex flex-wrap gap-4 mb-4">
+                {user.location && (
+                  <div className="flex items-center gap-2 text-text-secondary text-sm">
+                    <FaMapMarkerAlt />
+                    <span>{user.location}</span>
+                  </div>
+                )}
+                {user.website && (
+                  <a
+                    href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-primary hover:underline text-sm"
+                  >
+                    <FaLink />
+                    <span>{user.website.replace(/^https?:\/\//, '')}</span>
+                  </a>
+                )}
               </div>
-              <div className="text-text-secondary text-sm">Posts</div>
-            </div>
-            <button className="text-center hover:opacity-80 transition-opacity">
-              <div className="text-2xl font-bold text-text-primary">
-                {user.followers.toLocaleString()}
-              </div>
-              <div className="text-text-secondary text-sm">Followers</div>
-            </button>
-            <button className="text-center hover:opacity-80 transition-opacity">
-              <div className="text-2xl font-bold text-text-primary">
-                {user.following.toLocaleString()}
-              </div>
-              <div className="text-text-secondary text-sm">Following</div>
-            </button>
-          </div>
 
-          {/* Actions */}
-          <div className="flex gap-4 mt-8">
-            {user.isOwnProfile ? (
-              <Button
-                variant="outline"
-                icon={<FaEdit />}
-                onClick={handleEditClick}
-              >
-                Edit Profile
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant={user.isFollowing ? 'secondary' : 'primary'}
-                  onClick={handleFollowClick}
+              {/* Stats */}
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-text-primary">
+                    {user.posts?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-text-secondary">Posts</div>
+                </div>
+                <Link 
+                  href={`/profile/${user.id}/followers`}
+                  className="text-center hover:opacity-80"
                 >
-                  {user.isFollowing ? 'Following' : 'Follow'}
-                </Button>
-                <Button variant="outline">Message</Button>
-              </>
+                  <div className="text-xl font-bold text-text-primary">
+                    {followerCount.toLocaleString()}
+                  </div>
+                  <div className="text-sm text-text-secondary">Followers</div>
+                </Link>
+                <Link 
+                  href={`/profile/${user.id}/following`}
+                  className="text-center hover:opacity-80"
+                >
+                  <div className="text-xl font-bold text-text-primary">
+                    {user.following?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-text-secondary">Following</div>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-4 md:mt-0">
+            {user.isOwnProfile ? (
+              <button
+                onClick={onEditProfile}
+                className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
+              >
+                <FaEdit /> Edit Profile
+              </button>
+            ) : (
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className={`px-6 py-3 rounded-lg transition-colors flex items-center gap-2 ${
+                  isFollowing
+                    ? 'bg-surface-hover text-text-primary hover:bg-surface-hover-dark'
+                    : 'bg-primary text-white hover:bg-primary-dark'
+                } ${followLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isFollowing ? (
+                  <>
+                    <FaUserCheck /> Following
+                  </>
+                ) : (
+                  <>
+                    <FaUserPlus /> Follow
+                  </>
+                )}
+              </button>
             )}
           </div>
         </div>

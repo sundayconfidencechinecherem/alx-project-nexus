@@ -1,3 +1,4 @@
+// app/components/PromotionSidebar.tsx - UPDATED
 'use client';
 import { FaPlus, FaExternalLinkAlt } from "react-icons/fa";
 import Image from "next/image";
@@ -41,85 +42,71 @@ export default function PromotionSidebar() {
 
   return (
     <div className="space-y-6">
-      {/* Promotions Section */}
-      <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-border">
-          <h3 className="font-bold text-text-primary text-lg">Promoted Content</h3>
-          <p className="text-sm text-text-secondary mt-1">Sponsored • Suggested for you</p>
+      {/* Promotion Section */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+        <div className="border-b border-border p-5">
+          <h3 className="text-lg font-bold text-text-primary">Sponsored Content</h3>
+          <p className="mt-1 text-sm text-text-secondary">Suggested for you • Promoted</p>
         </div>
         
         <div className="divide-y divide-border">
           {promotions.map((promo) => (
-            <div key={promo.id} className="p-4 hover:bg-surface-hover/50 transition-colors">
-              {/* Promoted label */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-text-tertiary bg-surface-hover px-2 py-1 rounded">
-                    Promoted
-                  </span>
+            <div key={promo.id} className="p-5 transition-colors hover:bg-surface-hover/50">
+              {/* Header */}
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   {promo.logo && (
-                    <div className="relative w-6 h-6">
+                    <div className="relative h-8 w-8">
                       <Image 
                         src={promo.logo} 
                         alt={promo.company} 
                         fill 
-                        className="object-contain" 
+                        className="rounded-lg object-cover" 
                       />
                     </div>
                   )}
+                  <div>
+                    <h4 className="font-bold text-text-primary">{promo.title}</h4>
+                    <p className="text-sm text-text-secondary">{promo.company}</p>
+                  </div>
                 </div>
-                <button className="text-text-tertiary hover:text-text-secondary">
-                  <FaExternalLinkAlt className="text-sm" />
-                </button>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  Sponsored
+                </span>
               </div>
               
-              {/* Content */}
-              <div className="mb-4">
-                <h4 className="font-bold text-text-primary text-lg mb-1">{promo.title}</h4>
-                <p className="text-sm text-text-secondary mb-2">{promo.company}</p>
-                <p className="text-text-primary text-sm leading-relaxed">{promo.description}</p>
-              </div>
+              {/* Description */}
+              <p className="mb-4 text-sm text-text-primary leading-relaxed">
+                {promo.description}
+              </p>
               
-              {/* Action button */}
-              <button className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-semibold rounded-full text-sm transition-colors">
+              {/* Action Button */}
+              <button className="w-full rounded-full bg-primary py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">
                 {promo.action}
               </button>
+              
+              {/* Footer */}
+              <div className="mt-3 flex items-center justify-between text-xs text-text-tertiary">
+                <span>• Promoted</span>
+                <button className="flex items-center gap-1 hover:text-text-secondary">
+                  <FaExternalLinkAlt className="text-xs" />
+                  Learn more
+                </button>
+              </div>
             </div>
           ))}
         </div>
         
-        <div className="p-4 border-t border-border">
-          <button className="w-full text-primary hover:text-primary-dark text-sm font-medium flex items-center justify-center gap-1">
+        <div className="border-t border-border p-4">
+          <button className="flex w-full items-center justify-center gap-1 text-sm font-medium text-primary hover:text-primary-dark">
             Show more
             <FaPlus className="text-xs" />
           </button>
         </div>
       </div>
 
+
      
-
-    {/* Footer Links */}
-<div className="text-xs text-text-tertiary space-y-2 pt-4">
-  <div className="flex flex-wrap justify-center gap-3">
-    <a href="/help" className="hover:text-text-secondary hover:underline">
-      Help
-    </a>
-    <a href="/terms" className="hover:text-text-secondary hover:underline">
-      Terms
-    </a>
-    <a href="/privacy" className="hover:text-text-secondary hover:underline">
-      Privacy
-    </a>
-    <a href="/cookies" className="hover:text-text-secondary hover:underline">
-      Cookies
-    </a>
-  </div>
-
-  <p className="pt-2 text-center">
-    © 2026 Craveo. All rights reserved.
-  </p>
-</div>
-
     </div>
   );
 }

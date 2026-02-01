@@ -1,152 +1,141 @@
+// src/app/components/PostGrid.tsx - UPDATED
 'use client';
 
-import { Post } from '../types/post';
+import { useState } from 'react';
+import { FaTh, FaList } from 'react-icons/fa';
 import PostCard from './PostCard';
-import EmptyState from './EmptyState';
-import { FaImages, FaHeart, FaBookmark, FaUtensils } from 'react-icons/fa';
+import { Post } from '@/app/graphql/types';
 
 interface PostGridProps {
   posts: Post[];
   type: 'grid' | 'list';
-  emptyState?: {
-    icon: React.ReactNode;
-    title: string;
-    message: string;
-  };
-  onLike?: (postId: string) => void;
-  onComment?: (postId: string) => void;
-  onShare?: (postId: string) => void;
-  onSave?: (postId: string) => void;
+  loading?: boolean;
+  emptyMessage?: string;
+  emptyAction?: () => void; // Add this
+  emptyActionText?: string; // Add this
 }
 
-export default function PostGrid({
-  posts,
-  type = 'grid',
-  emptyState,
-  onLike,
-  onComment,
-  onShare,
-  onSave,
+export default function PostGrid({ 
+  posts, 
+  type, 
+  loading = false,
+  emptyMessage = "No posts to show",
+  emptyAction,
+  emptyActionText
 }: PostGridProps) {
-  const defaultEmptyStates = {
-    posts: {
-      icon: <FaImages className="w-12 h-12" />,
-      title: 'No posts yet',
-      message: 'When you share food posts, they will appear here.',
-    },
-    liked: {
-      icon: <FaHeart className="w-12 h-12" />,
-      title: 'No liked posts',
-      message: 'Posts you like will appear here.',
-    },
-    saved: {
-      icon: <FaBookmark className="w-12 h-12" />,
-      title: 'No saved posts',
-      message: 'Posts you save will appear here.',
-    },
-    recipes: {
-      icon: <FaUtensils className="w-12 h-12" />,
-      title: 'No recipes',
-      message: 'Your recipes will appear here.',
-    },
-  };
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(type);
 
-  const activeEmptyState = emptyState || defaultEmptyStates.posts;
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        {/* View Mode Toggle Skeleton */}
+        <div className="flex justify-end mb-6">
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <div className="px-4 py-2 w-20 bg-gray-300"></div>
+            <div className="px-4 py-2 w-20 bg-gray-300"></div>
+          </div>
+        </div>
+        
+        {/* Grid/List Skeleton */}
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-surface rounded-xl overflow-hidden">
+                <div className="aspect-square bg-gray-300" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-gray-300 rounded w-3/4" />
+                  <div className="h-3 bg-gray-300 rounded w-1/2" />
+                  <div className="flex gap-2">
+                    <div className="h-4 w-12 bg-gray-300 rounded" />
+                    <div className="h-4 w-12 bg-gray-300 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-surface rounded-xl p-4 flex gap-4">
+                <div className="w-24 h-24 bg-gray-300 rounded-lg flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-300 rounded w-1/2" />
+                  <div className="h-3 bg-gray-300 rounded w-3/4" />
+                  <div className="h-3 bg-gray-300 rounded w-1/4" />
+                  <div className="flex gap-4 pt-2">
+                    <div className="h-4 w-8 bg-gray-300 rounded" />
+                    <div className="h-4 w-8 bg-gray-300 rounded" />
+                    <div className="h-4 w-8 bg-gray-300 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (posts.length === 0) {
     return (
-      <div className="py-12">
-        <EmptyState
-          title={activeEmptyState.title}
-          message={activeEmptyState.message}
-          showAction={false}
-        />
+      <div className="text-center py-12">
+        <div className="text-text-secondary mb-2">{emptyMessage}</div>
+        {emptyAction && emptyActionText && (
+          <button
+            onClick={emptyAction}
+            className="mt-4 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+          >
+            {emptyActionText}
+          </button>
+        )}
       </div>
     );
   }
 
-  if (type === 'list') {
-    return (
-      <div className="space-y-6">
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onLike={onLike}
-            onComment={onComment}
-            onShare={onShare}
-            onSave={onSave}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  // Grid layout
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {posts.map((post) => (
-        <div
-          key={post.id}
-          className="bg-surface rounded-xl shadow-lg overflow-hidden border border-border hover:shadow-xl transition-shadow"
-        >
-          {/* Image */}
-          <div className="relative aspect-square overflow-hidden">
-            <img
-              src={post.imageUrl}
-              alt={post.caption}
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity">
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => onLike?.(post.id)}
-                    className="flex items-center gap-1 hover:scale-110 transition-transform"
-                  >
-                    <FaHeart className={post.isLiked ? 'text-red-500' : ''} />
-                    <span>{post.likes.toLocaleString()}</span>
-                  </button>
-                  <button
-                    onClick={() => onComment?.(post.id)}
-                    className="flex items-center gap-1 hover:scale-110 transition-transform"
-                  >
-                    <span>{post.comments.toLocaleString()}</span>
-                  </button>
-                </div>
-                <button
-                  onClick={() => onSave?.(post.id)}
-                  className="hover:scale-110 transition-transform"
-                >
-                  <FaBookmark className={post.isSaved ? 'text-yellow-500' : ''} />
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          {/* Caption preview */}
-          <div className="p-4">
-            <p className="text-text-primary line-clamp-2 text-sm">
-              {post.caption}
-            </p>
-            <div className="flex flex-wrap gap-1 mt-2">
-              {post.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
-                >
-                  {tag}
-                </span>
-              ))}
-              {post.tags.length > 3 && (
-                <span className="px-2 py-1 bg-surface-hover text-text-tertiary rounded-full text-xs">
-                  +{post.tags.length - 3}
-                </span>
-              )}
-            </div>
-          </div>
+    <div>
+      {/* View Mode Toggle */}
+      <div className="flex justify-end mb-6">
+        <div className="inline-flex rounded-lg border border-border overflow-hidden">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`px-4 py-2 flex items-center gap-2 ${
+              viewMode === 'grid' 
+                ? 'bg-primary text-white' 
+                : 'bg-surface text-text-secondary hover:bg-surface-hover'
+            }`}
+          >
+            <FaTh className="w-4 h-4" />
+            <span className="hidden sm:inline">Grid</span>
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-4 py-2 flex items-center gap-2 ${
+              viewMode === 'list' 
+                ? 'bg-primary text-white' 
+                : 'bg-surface text-text-secondary hover:bg-surface-hover'
+            }`}
+          >
+            <FaList className="w-4 h-4" />
+            <span className="hidden sm:inline">List</span>
+          </button>
         </div>
-      ))}
+      </div>
+
+      {/* Posts Grid/List */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} variant="grid" />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} variant="list" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
