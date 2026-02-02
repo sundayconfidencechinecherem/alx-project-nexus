@@ -105,7 +105,7 @@ export default function Comments({ postId }: CommentsProps) {
       setComments(prev => prev.filter(c => !c.id.startsWith('temp-')));
       
       // Set error message
-      setError(error?.message || 'An error occurred while posting comment');
+      setError(error?.message || 'An error occurred while posting comments');
       
       // Restore the comment text so user can try again
       setNewComment(commentContent);
