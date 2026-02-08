@@ -56,8 +56,7 @@ All Craveo documentation is in the `docs/` folder:
 
 ### Deployment
 
-- *(In Progress)*
-- *(In Progress)*
+**Completed:** <a href="https://craveo-pi.vercel.app"> Craveo Live Link</a>  
 
 ### Contribution
 
